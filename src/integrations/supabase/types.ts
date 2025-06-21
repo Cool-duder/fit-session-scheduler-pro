@@ -20,6 +20,7 @@ export type Database = {
           name: string
           package: string
           phone: string
+          price: number | null
           regular_slot: string | null
           sessions_left: number
           total_sessions: number
@@ -34,6 +35,7 @@ export type Database = {
           name: string
           package: string
           phone: string
+          price?: number | null
           regular_slot?: string | null
           sessions_left?: number
           total_sessions?: number
@@ -48,6 +50,7 @@ export type Database = {
           name?: string
           package?: string
           phone?: string
+          price?: number | null
           regular_slot?: string | null
           sessions_left?: number
           total_sessions?: number

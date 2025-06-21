@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
@@ -131,17 +132,23 @@ export const useClients = () => {
     }
   }
 
-  const addClient = async (clientData: Omit<Client, 'id'>) => {
+  const addClient = async (clientData: {
+    name: string;
+    email: string;
+    phone: string;
+    package: string;
+    price: number;
+    sessions_left: number;
+    total_sessions: number;
+    monthly_count: number;
+    regular_slot: string;
+    location: string;
+    join_date: string;
+  }) => {
     try {
       const { data, error } = await supabase
         .from('clients')
-        .insert([{
-          ...clientData,
-          sessions_left: 10,
-          total_sessions: 10,
-          monthly_count: 0,
-          join_date: new Date().toISOString().split('T')[0]
-        }])
+        .insert([clientData])
         .select()
         .single()
 
