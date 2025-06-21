@@ -49,11 +49,16 @@ const CalendarView = () => {
     const session = sessions.find(session => {
       const sessionDate = new Date(session.date);
       const isDateMatch = isSameDay(sessionDate, date);
-      const isTimeMatch = session.time === time;
+      
+      // Convert database time format (HH:MM:SS) to calendar time format (HH:MM)
+      const sessionTime = session.time.substring(0, 5); // Extract HH:MM from HH:MM:SS
+      const isTimeMatch = sessionTime === time;
+      
       console.log('Checking session:', { 
         sessionDate: format(sessionDate, 'yyyy-MM-dd'), 
         checkDate: format(date, 'yyyy-MM-dd'),
-        sessionTime: session.time,
+        sessionTime: sessionTime,
+        originalSessionTime: session.time,
         checkTime: time,
         isDateMatch,
         isTimeMatch,

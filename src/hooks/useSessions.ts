@@ -46,13 +46,20 @@ export const useSessions = () => {
   const addSession = async (sessionData: Omit<Session, 'id'>) => {
     try {
       console.log('Adding session to database:', sessionData)
+      
+      // Ensure time is in the correct format (HH:MM:SS)
+      let formattedTime = sessionData.time;
+      if (sessionData.time.length === 5) {
+        formattedTime = sessionData.time + ':00'; // Add seconds if not present
+      }
+      
       const { data, error } = await supabase
         .from('sessions')
         .insert([{
           client_id: sessionData.client_id,
           client_name: sessionData.client_name,
           date: sessionData.date,
-          time: sessionData.time,
+          time: formattedTime,
           duration: sessionData.duration,
           package: sessionData.package,
           status: sessionData.status || 'confirmed',
@@ -61,7 +68,10 @@ export const useSessions = () => {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
       
       console.log('Session added successfully:', data)
       setSessions(prev => [...prev, data])
