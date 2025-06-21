@@ -53,6 +53,22 @@ export const useSessions = () => {
         formattedTime = sessionData.time + ':00'; // Add seconds if not present
       }
       
+      // First, get the current sessions_left for the client
+      const { data: clientData, error: clientFetchError } = await supabase
+        .from('clients')
+        .select('sessions_left')
+        .eq('id', sessionData.client_id)
+        .single()
+
+      if (clientFetchError) {
+        console.error('Error fetching client data:', clientFetchError)
+        throw new Error('Failed to fetch client information')
+      }
+
+      if (clientData.sessions_left <= 0) {
+        throw new Error('Client has no sessions left in their package')
+      }
+      
       const { data, error } = await supabase
         .from('sessions')
         .insert([{
@@ -77,7 +93,7 @@ export const useSessions = () => {
       const { error: updateError } = await supabase
         .from('clients')
         .update({ 
-          sessions_left: supabase.sql`sessions_left - 1`
+          sessions_left: clientData.sessions_left - 1
         })
         .eq('id', sessionData.client_id)
 
@@ -100,7 +116,7 @@ export const useSessions = () => {
       console.error('Error adding session:', error)
       toast({
         title: "Error",
-        description: "Failed to schedule session",
+        description: error instanceof Error ? error.message : "Failed to schedule session",
         variant: "destructive",
       })
       throw error
@@ -150,6 +166,18 @@ export const useSessions = () => {
     try {
       console.log('Deleting session:', sessionId)
       
+      // First, get the current sessions_left for the client
+      const { data: clientData, error: clientFetchError } = await supabase
+        .from('clients')
+        .select('sessions_left')
+        .eq('id', clientId)
+        .single()
+
+      if (clientFetchError) {
+        console.error('Error fetching client data:', clientFetchError)
+        throw new Error('Failed to fetch client information')
+      }
+      
       const { error } = await supabase
         .from('sessions')
         .delete()
@@ -161,7 +189,7 @@ export const useSessions = () => {
       const { error: updateError } = await supabase
         .from('clients')
         .update({ 
-          sessions_left: supabase.sql`sessions_left + 1`
+          sessions_left: clientData.sessions_left + 1
         })
         .eq('id', clientId)
 
