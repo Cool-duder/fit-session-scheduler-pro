@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -7,23 +6,17 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 console.log('Supabase URL:', supabaseUrl ? 'Present' : 'Missing')
 console.log('Supabase Anon Key:', supabaseAnonKey ? 'Present' : 'Missing')
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase environment variables are missing:')
-  console.error('VITE_SUPABASE_URL:', supabaseUrl || 'undefined')
-  console.error('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey || 'undefined')
-  
-  // Provide a more helpful error message
-  throw new Error(`
-    Supabase configuration is missing. Please ensure:
-    1. You've connected to Supabase via the green button in the top right
-    2. Your environment variables are properly set
-    3. Try refreshing the page after connecting to Supabase
-    
-    Missing: ${!supabaseUrl ? 'VITE_SUPABASE_URL ' : ''}${!supabaseAnonKey ? 'VITE_SUPABASE_ANON_KEY' : ''}
-  `)
+// Create a placeholder client if variables are missing
+const createSupabaseClient = () => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('Supabase configuration is missing. Please connect to Supabase using the green button in the top right.')
+    // Return a mock client that won't break the app
+    return createClient('https://placeholder.supabase.co', 'placeholder-key')
+  }
+  return createClient(supabaseUrl, supabaseAnonKey)
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createSupabaseClient()
 
 export type Database = {
   public: {
