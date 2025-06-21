@@ -31,6 +31,29 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
     package: "60min Premium"
   });
 
+  // Generate time slots from 5:00AM to 10:30PM in 30-minute intervals
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = 5; hour <= 22; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        if (hour === 22 && minute > 30) break; // Stop at 10:30PM
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        const displayTime = formatTimeForDisplay(hour, minute);
+        slots.push({ value: timeString, label: displayTime });
+      }
+    }
+    return slots;
+  };
+
+  const formatTimeForDisplay = (hour: number, minute: number) => {
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+    const displayMinute = minute.toString().padStart(2, '0');
+    return `${displayHour}:${displayMinute} ${period}`;
+  };
+
+  const timeSlots = generateTimeSlots();
+
   const handleClientSelect = (clientId: string) => {
     const selectedClient = clients.find(c => c.id === clientId);
     if (selectedClient) {
@@ -113,13 +136,18 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
           </div>
           <div>
             <Label htmlFor="time">Time</Label>
-            <Input
-              id="time"
-              type="time"
-              value={formData.time}
-              onChange={(e) => setFormData({...formData, time: e.target.value})}
-              required
-            />
+            <Select onValueChange={(value) => setFormData({...formData, time: value})} value={formData.time}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select time" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {timeSlots.map((slot) => (
+                  <SelectItem key={slot.value} value={slot.value}>
+                    {slot.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
