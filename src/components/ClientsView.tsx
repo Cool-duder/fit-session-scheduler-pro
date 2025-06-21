@@ -1,16 +1,17 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Plus, Phone, Mail, Calendar, Package } from "lucide-react";
+import { Search, Phone, Mail, Calendar, Package } from "lucide-react";
+import AddClientDialog from "./AddClientDialog";
 
 const ClientsView = () => {
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Mock clients data
-  const clients = [
+  // Mock clients data with state management
+  const [clients, setClients] = useState([
     {
       id: 1,
       name: "Sarah Johnson",
@@ -50,7 +51,30 @@ const ClientsView = () => {
       joinDate: "2024-03-10",
       avatar: "/api/placeholder/40/40"
     }
-  ];
+  ]);
+
+  const handleAddClient = (newClient: {
+    name: string;
+    email: string;
+    phone: string;
+    package: string;
+    regularSlot: string;
+  }) => {
+    const client = {
+      id: clients.length + 1,
+      name: newClient.name,
+      email: newClient.email,
+      phone: newClient.phone,
+      package: newClient.package,
+      sessionsLeft: 10,
+      totalSessions: 10,
+      monthlyCount: 0,
+      regularSlot: newClient.regularSlot || "TBD",
+      joinDate: new Date().toISOString().split('T')[0],
+      avatar: "/api/placeholder/40/40"
+    };
+    setClients([...clients, client]);
+  };
 
   const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -63,10 +87,7 @@ const ClientsView = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Client Management</CardTitle>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Client
-            </Button>
+            <AddClientDialog onAddClient={handleAddClient} />
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />

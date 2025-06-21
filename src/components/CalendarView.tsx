@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,13 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { ChevronLeft, ChevronRight, Plus, Clock, User } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks } from "date-fns";
+import NewSessionDialog from "./NewSessionDialog";
 
 const CalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   
-  // Mock sessions data
-  const sessions = [
+  // Mock sessions data with state management
+  const [sessions, setSessions] = useState([
     {
       id: 1,
       clientName: "Sarah Johnson",
@@ -40,7 +40,26 @@ const CalendarView = () => {
       package: "60min Premium",
       status: "pending"
     }
-  ];
+  ]);
+
+  const handleAddSession = (newSession: {
+    clientName: string;
+    date: string;
+    time: string;
+    duration: number;
+    package: string;
+  }) => {
+    const session = {
+      id: sessions.length + 1,
+      clientName: newSession.clientName,
+      time: newSession.time,
+      duration: newSession.duration,
+      date: new Date(newSession.date),
+      package: newSession.package,
+      status: "confirmed"
+    };
+    setSessions([...sessions, session]);
+  };
 
   const timeSlots = [
     "06:00", "06:30", "07:00", "07:30", "08:00", "08:30", "09:00", "09:30",
@@ -101,10 +120,7 @@ const CalendarView = () => {
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              New Session
-            </Button>
+            <NewSessionDialog onAddSession={handleAddSession} />
           </div>
         </div>
       </CardHeader>
