@@ -17,7 +17,7 @@ const ClientsView = () => {
     email: string;
     phone: string;
     package: string;
-    regular_slot: string;
+    regularSlot: string;
   }) => {
     addClient({
       name: newClient.name,
@@ -27,7 +27,7 @@ const ClientsView = () => {
       sessions_left: 10,
       total_sessions: 10,
       monthly_count: 0,
-      regular_slot: newClient.regular_slot || "TBD",
+      regular_slot: newClient.regularSlot || "TBD",
       join_date: new Date().toISOString().split('T')[0]
     });
   };

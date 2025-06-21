@@ -29,7 +29,10 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.name && formData.email && formData.phone) {
-      onAddClient(formData);
+      onAddClient({
+        ...formData,
+        regularSlot: formData.regularSlot
+      });
       setFormData({
         name: "",
         email: "",
