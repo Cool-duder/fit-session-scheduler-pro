@@ -9,7 +9,92 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          join_date: string
+          monthly_count: number
+          name: string
+          package: string
+          phone: string
+          regular_slot: string | null
+          sessions_left: number
+          total_sessions: number
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          join_date?: string
+          monthly_count?: number
+          name: string
+          package: string
+          phone: string
+          regular_slot?: string | null
+          sessions_left?: number
+          total_sessions?: number
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          join_date?: string
+          monthly_count?: number
+          name?: string
+          package?: string
+          phone?: string
+          regular_slot?: string | null
+          sessions_left?: number
+          total_sessions?: number
+        }
+        Relationships: []
+      }
+      sessions: {
+        Row: {
+          client_id: string
+          client_name: string
+          created_at: string
+          date: string
+          duration: number
+          id: string
+          package: string
+          status: string
+          time: string
+        }
+        Insert: {
+          client_id: string
+          client_name: string
+          created_at?: string
+          date: string
+          duration?: number
+          id?: string
+          package: string
+          status?: string
+          time: string
+        }
+        Update: {
+          client_id?: string
+          client_name?: string
+          created_at?: string
+          date?: string
+          duration?: number
+          id?: string
+          package?: string
+          status?: string
+          time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
