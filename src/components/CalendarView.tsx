@@ -1,64 +1,28 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
-import { ChevronLeft, ChevronRight, Plus, Clock, User } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks } from "date-fns";
 import NewSessionDialog from "./NewSessionDialog";
+import { useSessions } from "@/hooks/useSessions";
 
 const CalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
-  
-  // Mock sessions data with state management
-  const [sessions, setSessions] = useState([
-    {
-      id: 1,
-      clientName: "Sarah Johnson",
-      time: "09:00",
-      duration: 60,
-      date: new Date(),
-      package: "60min Premium",
-      status: "confirmed"
-    },
-    {
-      id: 2,
-      clientName: "Mike Chen",
-      time: "10:30",
-      duration: 30,
-      date: new Date(),
-      package: "30min Standard",
-      status: "confirmed"
-    },
-    {
-      id: 3,
-      clientName: "Emma Davis",
-      time: "14:00",
-      duration: 60,
-      date: addDays(new Date(), 1),
-      package: "60min Premium",
-      status: "pending"
-    }
-  ]);
+  const { sessions, loading, addSession } = useSessions();
 
   const handleAddSession = (newSession: {
-    clientName: string;
+    client_id: string;
+    client_name: string;
     date: string;
     time: string;
     duration: number;
     package: string;
   }) => {
-    const session = {
-      id: sessions.length + 1,
-      clientName: newSession.clientName,
-      time: newSession.time,
-      duration: newSession.duration,
-      date: new Date(newSession.date),
-      package: newSession.package,
-      status: "confirmed"
-    };
-    setSessions([...sessions, session]);
+    addSession(newSession);
   };
 
   const timeSlots = [
@@ -75,15 +39,21 @@ const CalendarView = () => {
     setCurrentDate(direction === 'next' ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1));
   };
 
-  const getSessionsForDay = (date: Date) => {
-    return sessions.filter(session => isSameDay(session.date, date));
-  };
-
   const getSessionForTimeSlot = (date: Date, time: string) => {
     return sessions.find(session => 
-      isSameDay(session.date, date) && session.time === time
+      isSameDay(new Date(session.date), date) && session.time === time
     );
   };
+
+  if (loading) {
+    return (
+      <Card className="bg-white">
+        <CardContent className="p-6">
+          <div className="text-center">Loading schedule...</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-white">
@@ -152,7 +122,7 @@ const CalendarView = () => {
                         <div className={`p-2 rounded-md text-xs cursor-pointer hover:shadow-md transition-shadow ${
                           session.duration === 60 ? 'bg-blue-100' : 'bg-green-100'
                         }`}>
-                          <div className="font-medium truncate">{session.clientName}</div>
+                          <div className="font-medium truncate">{session.client_name}</div>
                           <div className="flex items-center gap-1 text-gray-600">
                             <Clock className="w-3 h-3" />
                             {session.duration}min

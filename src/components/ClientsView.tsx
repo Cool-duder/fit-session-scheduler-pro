@@ -3,83 +3,49 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, Phone, Mail, Calendar, Package } from "lucide-react";
 import AddClientDialog from "./AddClientDialog";
+import { useClients } from "@/hooks/useClients";
 
 const ClientsView = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // Mock clients data with state management
-  const [clients, setClients] = useState([
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      email: "sarah.johnson@email.com",
-      phone: "+1 (555) 123-4567",
-      package: "60min Premium",
-      sessionsLeft: 7,
-      totalSessions: 10,
-      monthlyCount: 8,
-      regularSlot: "Mon, Wed, Fri 9:00 AM",
-      joinDate: "2024-01-15",
-      avatar: "/api/placeholder/40/40"
-    },
-    {
-      id: 2,
-      name: "Mike Chen",
-      email: "mike.chen@email.com",
-      phone: "+1 (555) 234-5678",
-      package: "30min Standard",
-      sessionsLeft: 3,
-      totalSessions: 10,
-      monthlyCount: 12,
-      regularSlot: "Tue, Thu 10:30 AM",
-      joinDate: "2024-02-20",
-      avatar: "/api/placeholder/40/40"
-    },
-    {
-      id: 3,
-      name: "Emma Davis",
-      email: "emma.davis@email.com",
-      phone: "+1 (555) 345-6789",
-      package: "60min Premium",
-      sessionsLeft: 9,
-      totalSessions: 10,
-      monthlyCount: 6,
-      regularSlot: "Mon, Wed 2:00 PM",
-      joinDate: "2024-03-10",
-      avatar: "/api/placeholder/40/40"
-    }
-  ]);
+  const { clients, loading, addClient } = useClients();
 
   const handleAddClient = (newClient: {
     name: string;
     email: string;
     phone: string;
     package: string;
-    regularSlot: string;
+    regular_slot: string;
   }) => {
-    const client = {
-      id: clients.length + 1,
+    addClient({
       name: newClient.name,
       email: newClient.email,
       phone: newClient.phone,
       package: newClient.package,
-      sessionsLeft: 10,
-      totalSessions: 10,
-      monthlyCount: 0,
-      regularSlot: newClient.regularSlot || "TBD",
-      joinDate: new Date().toISOString().split('T')[0],
-      avatar: "/api/placeholder/40/40"
-    };
-    setClients([...clients, client]);
+      sessions_left: 10,
+      total_sessions: 10,
+      monthly_count: 0,
+      regular_slot: newClient.regular_slot || "TBD",
+      join_date: new Date().toISOString().split('T')[0]
+    });
   };
 
   const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     client.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <Card className="bg-white">
+        <CardContent className="p-6">
+          <div className="text-center">Loading clients...</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -107,7 +73,6 @@ const ClientsView = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-4">
                       <Avatar className="h-12 w-12">
-                        <AvatarImage src={client.avatar} alt={client.name} />
                         <AvatarFallback>
                           {client.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
@@ -128,7 +93,7 @@ const ClientsView = () => {
                         </div>
                         <div className="flex items-center gap-1 text-sm text-gray-600">
                           <Calendar className="w-4 h-4" />
-                          Regular slot: {client.regularSlot}
+                          Regular slot: {client.regular_slot}
                         </div>
                       </div>
                     </div>
@@ -144,21 +109,20 @@ const ClientsView = () => {
                       <div className="space-y-1 text-sm">
                         <div className="flex justify-between gap-4">
                           <span className="text-gray-600">Sessions left:</span>
-                          <span className="font-medium">{client.sessionsLeft}/{client.totalSessions}</span>
+                          <span className="font-medium">{client.sessions_left}/{client.total_sessions}</span>
                         </div>
                         <div className="flex justify-between gap-4">
                           <span className="text-gray-600">This month:</span>
-                          <span className="font-medium text-blue-600">{client.monthlyCount}</span>
+                          <span className="font-medium text-blue-600">{client.monthly_count}</span>
                         </div>
                       </div>
                       
-                      {/* Progress bar for sessions */}
                       <div className="w-32">
                         <div className="bg-gray-200 rounded-full h-2">
                           <div 
                             className="bg-blue-600 h-2 rounded-full" 
                             style={{ 
-                              width: `${((client.totalSessions - client.sessionsLeft) / client.totalSessions) * 100}%` 
+                              width: `${((client.total_sessions - client.sessions_left) / client.total_sessions) * 100}%` 
                             }}
                           ></div>
                         </div>
