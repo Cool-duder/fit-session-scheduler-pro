@@ -163,6 +163,47 @@ export const useClients = () => {
     }
   }
 
+  const editClient = async (clientId: string, updatedData: {
+    name: string;
+    email: string;
+    phone: string;
+    package: string;
+    regularSlot: string;
+  }) => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .update({
+          name: updatedData.name,
+          email: updatedData.email,
+          phone: updatedData.phone,
+          package: updatedData.package,
+          regular_slot: updatedData.regularSlot
+        })
+        .eq('id', clientId)
+        .select()
+        .single()
+
+      if (error) throw error
+      
+      setClients(prev => prev.map(client => 
+        client.id === clientId ? data : client
+      ))
+      
+      toast({
+        title: "Success",
+        description: "Client updated successfully",
+      })
+    } catch (error) {
+      console.error('Error updating client:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update client",
+        variant: "destructive",
+      })
+    }
+  }
+
   const deleteClient = async (clientId: string, clientName: string) => {
     try {
       const { error } = await supabase
@@ -192,5 +233,5 @@ export const useClients = () => {
     fetchClients()
   }, [])
 
-  return { clients, loading, addClient, deleteClient, refetch: fetchClients }
+  return { clients, loading, addClient, editClient, deleteClient, refetch: fetchClients }
 }

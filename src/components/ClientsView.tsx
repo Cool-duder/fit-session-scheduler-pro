@@ -18,11 +18,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Search, Phone, Mail, Calendar, Package, Trash2 } from "lucide-react";
 import AddClientDialog from "./AddClientDialog";
+import EditClientDialog from "./EditClientDialog";
 import { useClients } from "@/hooks/useClients";
 
 const ClientsView = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { clients, loading, addClient, deleteClient } = useClients();
+  const { clients, loading, addClient, editClient, deleteClient } = useClients();
 
   const handleAddClient = (newClient: {
     name: string;
@@ -42,6 +43,16 @@ const ClientsView = () => {
       regular_slot: newClient.regularSlot || "TBD",
       join_date: new Date().toISOString().split('T')[0]
     });
+  };
+
+  const handleEditClient = (clientId: string, updatedData: {
+    name: string;
+    email: string;
+    phone: string;
+    package: string;
+    regularSlot: string;
+  }) => {
+    editClient(clientId, updatedData);
   };
 
   const handleDeleteClient = (clientId: string, clientName: string) => {
@@ -146,34 +157,38 @@ const ClientsView = () => {
                         </div>
                       </div>
                       
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Client</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete {client.name}? This will also delete all their scheduled sessions. This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDeleteClient(client.id, client.name)}
-                              className="bg-red-600 hover:bg-red-700"
+                      <div className="flex gap-1">
+                        <EditClientDialog client={client} onEditClient={handleEditClient} />
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Client</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete {client.name}? This will also delete all their scheduled sessions. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteClient(client.id, client.name)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
