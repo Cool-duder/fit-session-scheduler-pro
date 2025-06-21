@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
-import { format, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks } from "date-fns";
+import { format, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, subMonths, eachDayOfInterval, isSameMonth } from "date-fns";
 import NewSessionDialog from "./NewSessionDialog";
 import SessionDialog from "./SessionDialog";
 import { useSessions, Session } from "@/hooks/useSessions";
@@ -59,8 +59,19 @@ const CalendarView = () => {
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
+  // Month view calculations
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const monthDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+
   const navigateWeek = (direction: 'prev' | 'next') => {
     setCurrentDate(direction === 'next' ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1));
+  };
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setCurrentDate(direction === 'next' ? addMonths(currentDate, 1) : subMonths(currentDate, 1));
   };
 
   const getSessionForTimeSlot = (date: Date, time: string) => {
@@ -85,6 +96,13 @@ const CalendarView = () => {
       return isDateMatch && isTimeMatch;
     });
     return session;
+  };
+
+  const getSessionsForDay = (date: Date) => {
+    return sessions.filter(session => {
+      const sessionDate = new Date(session.date);
+      return isSameDay(sessionDate, date);
+    });
   };
 
   if (loading) {
@@ -125,13 +143,24 @@ const CalendarView = () => {
                 </Button>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => navigateWeek('prev')}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => viewMode === 'week' ? navigateWeek('prev') : navigateMonth('prev')}
+                >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
                 <span className="font-medium min-w-[200px] text-center">
-                  {format(weekStart, 'MMM d')} - {format(endOfWeek(weekStart), 'MMM d, yyyy')}
+                  {viewMode === 'week' 
+                    ? `${format(weekStart, 'MMM d')} - ${format(endOfWeek(weekStart), 'MMM d, yyyy')}`
+                    : format(currentDate, 'MMMM yyyy')
+                  }
                 </span>
-                <Button variant="outline" size="sm" onClick={() => navigateWeek('next')}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => viewMode === 'week' ? navigateWeek('next') : navigateMonth('next')}
+                >
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
@@ -198,9 +227,49 @@ const CalendarView = () => {
           )}
           
           {viewMode === 'month' && (
-            <div className="text-center py-12 text-gray-500">
-              <Calendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p>Monthly view coming soon!</p>
+            <div className="grid grid-cols-7 gap-1">
+              {/* Day headers */}
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                <div key={day} className="p-2 text-center font-medium text-sm text-gray-600 border-b">
+                  {day}
+                </div>
+              ))}
+              
+              {/* Calendar days */}
+              {monthDays.map((day) => {
+                const daySessions = getSessionsForDay(day);
+                const isCurrentMonth = isSameMonth(day, currentDate);
+                const isToday = isSameDay(day, new Date());
+                
+                return (
+                  <div 
+                    key={day.toISOString()} 
+                    className={`min-h-[100px] p-2 border border-gray-100 ${
+                      !isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'
+                    } ${isToday ? 'bg-blue-50 border-blue-200' : ''}`}
+                  >
+                    <div className={`text-sm font-medium mb-1 ${isToday ? 'text-blue-600' : ''}`}>
+                      {format(day, 'd')}
+                    </div>
+                    <div className="space-y-1">
+                      {daySessions.map((session) => (
+                        <div
+                          key={session.id}
+                          className={`text-xs p-1 rounded cursor-pointer hover:shadow-sm transition-shadow ${
+                            session.duration === 60 ? 'bg-blue-100 hover:bg-blue-200' : 'bg-green-100 hover:bg-green-200'
+                          }`}
+                          onClick={() => handleSessionClick(session)}
+                        >
+                          <div className="font-medium truncate">{session.client_name}</div>
+                          <div className="text-gray-600">
+                            {session.time.substring(0, 5)} ({session.duration}min)
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
