@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,9 +11,9 @@ import { useSessions } from "@/hooks/useSessions";
 const CalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
-  const { sessions, loading, addSession } = useSessions();
+  const { sessions, loading, addSession, refetch } = useSessions();
 
-  const handleAddSession = (newSession: {
+  const handleAddSession = async (newSession: {
     client_id: string;
     client_name: string;
     date: string;
@@ -22,10 +21,13 @@ const CalendarView = () => {
     duration: number;
     package: string;
   }) => {
-    addSession({
+    console.log('Adding new session:', newSession);
+    await addSession({
       ...newSession,
       status: 'confirmed'
     });
+    // Refetch sessions to ensure calendar updates
+    await refetch();
   };
 
   const timeSlots = [
@@ -43,9 +45,22 @@ const CalendarView = () => {
   };
 
   const getSessionForTimeSlot = (date: Date, time: string) => {
-    return sessions.find(session => 
-      isSameDay(new Date(session.date), date) && session.time === time
-    );
+    const session = sessions.find(session => {
+      const sessionDate = new Date(session.date);
+      const isDateMatch = isSameDay(sessionDate, date);
+      const isTimeMatch = session.time === time;
+      console.log('Checking session:', { 
+        sessionDate: format(sessionDate, 'yyyy-MM-dd'), 
+        checkDate: format(date, 'yyyy-MM-dd'),
+        sessionTime: session.time,
+        checkTime: time,
+        isDateMatch,
+        isTimeMatch,
+        clientName: session.client_name
+      });
+      return isDateMatch && isTimeMatch;
+    });
+    return session;
   };
 
   if (loading) {
@@ -57,6 +72,8 @@ const CalendarView = () => {
       </Card>
     );
   }
+
+  console.log('Current sessions:', sessions);
 
   return (
     <Card className="bg-white">
