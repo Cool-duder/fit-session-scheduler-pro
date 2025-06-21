@@ -73,6 +73,21 @@ export const useSessions = () => {
         throw error
       }
       
+      // Deduct one session from client's sessions_left
+      const { error: updateError } = await supabase
+        .from('clients')
+        .update({ 
+          sessions_left: supabase.sql`sessions_left - 1`
+        })
+        .eq('id', sessionData.client_id)
+
+      if (updateError) {
+        console.error('Error updating client sessions:', updateError)
+        // If we can't update the client, we should delete the session we just created
+        await supabase.from('sessions').delete().eq('id', data.id)
+        throw new Error('Failed to update client session count')
+      }
+      
       console.log('Session added successfully:', data)
       setSessions(prev => [...prev, data])
       toast({
@@ -92,9 +107,93 @@ export const useSessions = () => {
     }
   }
 
+  const updateSession = async (sessionId: string, updates: Partial<Omit<Session, 'id'>>) => {
+    try {
+      console.log('Updating session:', sessionId, updates)
+      
+      // Format time if provided
+      if (updates.time && updates.time.length === 5) {
+        updates.time = updates.time + ':00'
+      }
+      
+      const { data, error } = await supabase
+        .from('sessions')
+        .update(updates)
+        .eq('id', sessionId)
+        .select()
+        .single()
+
+      if (error) throw error
+      
+      setSessions(prev => prev.map(session => 
+        session.id === sessionId ? data : session
+      ))
+      
+      toast({
+        title: "Success",
+        description: "Session updated successfully",
+      })
+      
+      return data
+    } catch (error) {
+      console.error('Error updating session:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update session",
+        variant: "destructive",
+      })
+      throw error
+    }
+  }
+
+  const deleteSession = async (sessionId: string, clientId: string) => {
+    try {
+      console.log('Deleting session:', sessionId)
+      
+      const { error } = await supabase
+        .from('sessions')
+        .delete()
+        .eq('id', sessionId)
+
+      if (error) throw error
+      
+      // Add one session back to client's sessions_left
+      const { error: updateError } = await supabase
+        .from('clients')
+        .update({ 
+          sessions_left: supabase.sql`sessions_left + 1`
+        })
+        .eq('id', clientId)
+
+      if (updateError) {
+        console.error('Error updating client sessions:', updateError)
+        toast({
+          title: "Warning",
+          description: "Session deleted but failed to update client session count",
+          variant: "destructive",
+        })
+      }
+      
+      setSessions(prev => prev.filter(session => session.id !== sessionId))
+      
+      toast({
+        title: "Success",
+        description: "Session deleted and added back to package",
+      })
+    } catch (error) {
+      console.error('Error deleting session:', error)
+      toast({
+        title: "Error",
+        description: "Failed to delete session",
+        variant: "destructive",
+      })
+      throw error
+    }
+  }
+
   useEffect(() => {
     fetchSessions()
   }, [])
 
-  return { sessions, loading, addSession, refetch: fetchSessions }
+  return { sessions, loading, addSession, updateSession, deleteSession, refetch: fetchSessions }
 }
