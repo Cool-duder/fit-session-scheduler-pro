@@ -15,6 +15,7 @@ export type Database = {
           email: string
           id: string
           join_date: string
+          location: string | null
           monthly_count: number
           name: string
           package: string
@@ -28,6 +29,7 @@ export type Database = {
           email: string
           id?: string
           join_date?: string
+          location?: string | null
           monthly_count?: number
           name: string
           package: string
@@ -41,6 +43,7 @@ export type Database = {
           email?: string
           id?: string
           join_date?: string
+          location?: string | null
           monthly_count?: number
           name?: string
           package?: string
@@ -59,6 +62,7 @@ export type Database = {
           date: string
           duration: number
           id: string
+          location: string | null
           package: string
           status: string
           time: string
@@ -70,6 +74,7 @@ export type Database = {
           date: string
           duration?: number
           id?: string
+          location?: string | null
           package: string
           status?: string
           time: string
@@ -81,6 +86,7 @@ export type Database = {
           date?: string
           duration?: number
           id?: string
+          location?: string | null
           package?: string
           status?: string
           time?: string
