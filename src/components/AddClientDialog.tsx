@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ interface AddClientDialogProps {
     package: string;
     price: number;
     regularSlot: string;
+    location: string;
   }) => void;
 }
 
@@ -25,7 +25,8 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
     phone: "",
     package: "60min Premium",
     price: 120,
-    regularSlot: ""
+    regularSlot: "",
+    location: ""
   });
 
   const handlePackageChange = (packageType: string) => {
@@ -42,7 +43,8 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
     if (formData.name && formData.email && formData.phone) {
       onAddClient({
         ...formData,
-        regularSlot: formData.regularSlot
+        regularSlot: formData.regularSlot,
+        location: formData.location
       });
       setFormData({
         name: "",
@@ -50,7 +52,8 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
         phone: "",
         package: "60min Premium",
         price: 120,
-        regularSlot: ""
+        regularSlot: "",
+        location: ""
       });
       setOpen(false);
     }
@@ -135,6 +138,18 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
             />
             <p className="text-xs text-gray-500 mt-1">
               Enter day and time (e.g., "Monday 09:00" or "Mon, Wed, Fri 9:00 AM")
+            </p>
+          </div>
+          <div>
+            <Label htmlFor="location">Training Location</Label>
+            <Input
+              id="location"
+              value={formData.location}
+              onChange={(e) => setFormData({...formData, location: e.target.value})}
+              placeholder="e.g., Main Gym, Home Studio, Park"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Enter the location where training sessions will take place
             </p>
           </div>
           <div className="flex justify-end space-x-2">

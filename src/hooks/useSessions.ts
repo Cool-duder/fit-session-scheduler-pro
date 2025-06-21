@@ -12,6 +12,7 @@ export type Session = {
   duration: number
   package: string
   status: string
+  location?: string
 }
 
 export const useSessions = () => {

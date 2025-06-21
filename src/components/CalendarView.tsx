@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
-import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks } from "date-fns";
 import NewSessionDialog from "./NewSessionDialog";
 import { useSessions } from "@/hooks/useSessions";
@@ -129,6 +129,12 @@ const CalendarView = () => {
                             <Clock className="w-3 h-3" />
                             {session.duration}min
                           </div>
+                          {session.location && (
+                            <div className="flex items-center gap-1 text-gray-600 mt-1">
+                              <MapPin className="w-3 h-3" />
+                              <span className="truncate">{session.location}</span>
+                            </div>
+                          )}
                           <Badge 
                             variant={session.status === 'confirmed' ? 'default' : 'secondary'}
                             className="mt-1 text-xs"

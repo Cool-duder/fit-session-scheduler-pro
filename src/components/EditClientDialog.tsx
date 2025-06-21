@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ interface EditClientDialogProps {
     package: string;
     price: number;
     regularSlot: string;
+    location: string;
   }) => void;
 }
 
@@ -27,7 +27,8 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     phone: client.phone,
     package: client.package,
     price: client.price || (client.package.includes('60min') ? 120 : 80),
-    regularSlot: client.regular_slot
+    regularSlot: client.regular_slot,
+    location: client.location || ""
   });
 
   const handlePackageChange = (packageType: string) => {
@@ -44,7 +45,8 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     if (formData.name && formData.email && formData.phone) {
       onEditClient(client.id, {
         ...formData,
-        regularSlot: formData.regularSlot
+        regularSlot: formData.regularSlot,
+        location: formData.location
       });
       setOpen(false);
     }
@@ -132,6 +134,18 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
             />
             <p className="text-xs text-gray-500 mt-1">
               Enter day and time (e.g., "Monday 09:00" or "Mon, Wed, Fri 9:00 AM")
+            </p>
+          </div>
+          <div>
+            <Label htmlFor="edit-location">Training Location</Label>
+            <Input
+              id="edit-location"
+              value={formData.location}
+              onChange={(e) => setFormData({...formData, location: e.target.value})}
+              placeholder="e.g., Main Gym, Home Studio, Park"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Enter the location where training sessions will take place
             </p>
           </div>
           <div className="flex justify-end space-x-2">

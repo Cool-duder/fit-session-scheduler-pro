@@ -14,6 +14,7 @@ export type Client = {
   total_sessions: number
   monthly_count: number
   regular_slot: string
+  location?: string
   join_date: string
 }
 
@@ -102,7 +103,8 @@ export const useClients = () => {
             time: time24h,
             duration: client.package.includes('60min') ? 60 : 30,
             package: client.package,
-            status: 'confirmed'
+            status: 'confirmed',
+            location: client.location || 'TBD'
           })
         }
       }
@@ -171,6 +173,7 @@ export const useClients = () => {
     package: string;
     price: number;
     regularSlot: string;
+    location: string;
   }) => {
     try {
       const { data, error } = await supabase
@@ -181,7 +184,8 @@ export const useClients = () => {
           phone: updatedData.phone,
           package: updatedData.package,
           price: updatedData.price,
-          regular_slot: updatedData.regularSlot
+          regular_slot: updatedData.regularSlot,
+          location: updatedData.location
         })
         .eq('id', clientId)
         .select()
