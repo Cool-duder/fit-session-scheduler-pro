@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
@@ -164,9 +163,34 @@ export const useClients = () => {
     }
   }
 
+  const deleteClient = async (clientId: string, clientName: string) => {
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', clientId)
+
+      if (error) throw error
+
+      setClients(prev => prev.filter(client => client.id !== clientId))
+      
+      toast({
+        title: "Success",
+        description: `${clientName} has been deleted`,
+      })
+    } catch (error) {
+      console.error('Error deleting client:', error)
+      toast({
+        title: "Error",
+        description: "Failed to delete client",
+        variant: "destructive",
+      })
+    }
+  }
+
   useEffect(() => {
     fetchClients()
   }, [])
 
-  return { clients, loading, addClient, refetch: fetchClients }
+  return { clients, loading, addClient, deleteClient, refetch: fetchClients }
 }
