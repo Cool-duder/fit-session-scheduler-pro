@@ -12,6 +12,7 @@ interface AddClientDialogProps {
     email: string;
     phone: string;
     package: string;
+    price: number;
     regularSlot: string;
   }) => void;
 }
@@ -23,8 +24,18 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
     email: "",
     phone: "",
     package: "60min Premium",
+    price: 120,
     regularSlot: ""
   });
+
+  const handlePackageChange = (packageType: string) => {
+    const defaultPrice = packageType === "30min Standard" ? 80 : 120;
+    setFormData({
+      ...formData,
+      package: packageType,
+      price: defaultPrice
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +49,7 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
         email: "",
         phone: "",
         package: "60min Premium",
+        price: 120,
         regularSlot: ""
       });
       setOpen(false);
@@ -93,12 +105,25 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
             <select
               id="package"
               value={formData.package}
-              onChange={(e) => setFormData({...formData, package: e.target.value})}
+              onChange={(e) => handlePackageChange(e.target.value)}
               className="w-full h-10 px-3 py-2 border border-input bg-background rounded-md"
             >
               <option value="30min Standard">30min Standard</option>
               <option value="60min Premium">60min Premium</option>
             </select>
+          </div>
+          <div>
+            <Label htmlFor="price">Package Price ($)</Label>
+            <Input
+              id="price"
+              type="number"
+              value={formData.price}
+              onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
+              placeholder="120"
+              min="0"
+              step="0.01"
+              required
+            />
           </div>
           <div>
             <Label htmlFor="regularSlot">Regular Time Slot</Label>

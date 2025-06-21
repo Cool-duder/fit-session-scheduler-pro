@@ -14,6 +14,7 @@ interface EditClientDialogProps {
     email: string;
     phone: string;
     package: string;
+    price: number;
     regularSlot: string;
   }) => void;
 }
@@ -25,8 +26,18 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     email: client.email,
     phone: client.phone,
     package: client.package,
+    price: client.price || (client.package.includes('60min') ? 120 : 80),
     regularSlot: client.regular_slot
   });
+
+  const handlePackageChange = (packageType: string) => {
+    const defaultPrice = packageType === "30min Standard" ? 80 : 120;
+    setFormData({
+      ...formData,
+      package: packageType,
+      price: defaultPrice
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,12 +102,25 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
             <select
               id="edit-package"
               value={formData.package}
-              onChange={(e) => setFormData({...formData, package: e.target.value})}
+              onChange={(e) => handlePackageChange(e.target.value)}
               className="w-full h-10 px-3 py-2 border border-input bg-background rounded-md"
             >
               <option value="30min Standard">30min Standard</option>
               <option value="60min Premium">60min Premium</option>
             </select>
+          </div>
+          <div>
+            <Label htmlFor="edit-price">Package Price ($)</Label>
+            <Input
+              id="edit-price"
+              type="number"
+              value={formData.price}
+              onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
+              placeholder="120"
+              min="0"
+              step="0.01"
+              required
+            />
           </div>
           <div>
             <Label htmlFor="edit-regularSlot">Regular Time Slot</Label>

@@ -9,6 +9,7 @@ export type Client = {
   email: string
   phone: string
   package: string
+  price?: number
   sessions_left: number
   total_sessions: number
   monthly_count: number
@@ -168,6 +169,7 @@ export const useClients = () => {
     email: string;
     phone: string;
     package: string;
+    price: number;
     regularSlot: string;
   }) => {
     try {
@@ -178,6 +180,7 @@ export const useClients = () => {
           email: updatedData.email,
           phone: updatedData.phone,
           package: updatedData.package,
+          price: updatedData.price,
           regular_slot: updatedData.regularSlot
         })
         .eq('id', clientId)

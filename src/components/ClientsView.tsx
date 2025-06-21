@@ -30,6 +30,7 @@ const ClientsView = () => {
     email: string;
     phone: string;
     package: string;
+    price: number;
     regularSlot: string;
   }) => {
     addClient({
@@ -37,6 +38,7 @@ const ClientsView = () => {
       email: newClient.email,
       phone: newClient.phone,
       package: newClient.package,
+      price: newClient.price,
       sessions_left: 10,
       total_sessions: 10,
       monthly_count: 0,
@@ -50,6 +52,7 @@ const ClientsView = () => {
     email: string;
     phone: string;
     package: string;
+    price: number;
     regularSlot: string;
   }) => {
     editClient(clientId, updatedData);
