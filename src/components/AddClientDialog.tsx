@@ -101,13 +101,16 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
             </select>
           </div>
           <div>
-            <Label htmlFor="regularSlot">Regular Time Slot (Optional)</Label>
+            <Label htmlFor="regularSlot">Regular Time Slot</Label>
             <Input
               id="regularSlot"
               value={formData.regularSlot}
               onChange={(e) => setFormData({...formData, regularSlot: e.target.value})}
-              placeholder="e.g., Mon, Wed, Fri 9:00 AM"
+              placeholder="e.g., Monday 09:00, Wed 10:30, Friday 2:00 PM"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Enter day and time (e.g., "Monday 09:00" or "Mon, Wed, Fri 9:00 AM")
+            </p>
           </div>
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
