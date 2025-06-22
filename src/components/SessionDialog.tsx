@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -62,9 +61,10 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
 
   const timeSlots = generateTimeSlots();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (session) {
-      onUpdate(session.id, {
+      console.log('Saving session updates:', formData);
+      await onUpdate(session.id, {
         date: formData.date,
         time: formData.time,
         duration: formData.duration,
@@ -141,7 +141,7 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
-                    {timeSlots.map((slot) => (
+                    {generateTimeSlots().map((slot) => (
                       <SelectItem key={slot.value} value={slot.value}>
                         {slot.label}
                       </SelectItem>
@@ -150,7 +150,7 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
                 </Select>
               ) : (
                 <div className="p-2 bg-gray-50 rounded">
-                  {timeSlots.find(slot => slot.value === formData.time)?.label || formData.time}
+                  {generateTimeSlots().find(slot => slot.value === formData.time)?.label || formData.time}
                 </div>
               )}
             </div>
