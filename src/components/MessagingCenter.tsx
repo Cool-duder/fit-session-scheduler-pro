@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,13 +7,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Send, Clock, MessageSquare, Users } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { useSessions } from "@/hooks/useSessions";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const MessagingCenter = () => {
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
   const [messageTemplate, setMessageTemplate] = useState(
     "Hi {clientName}! {messageType} you have a {duration}-minute training session scheduled for {sessionDate} at {time}. See you soon! 💪"
   );
+  const [sending, setSending] = useState(false);
   const { sessions, loading } = useSessions();
+  const { toast } = useToast();
 
   // Get today's and tomorrow's dates
   const today = new Date();
@@ -86,11 +89,74 @@ const MessagingCenter = () => {
       .replace('{time}', session.time);
   };
 
-  const handleSendMessages = () => {
+  const handleSendMessages = async () => {
+    if (selectedClients.length === 0) return;
+
+    setSending(true);
     console.log('Sending messages to clients:', selectedClients);
-    // Here you would integrate with SMS/messaging service
-    alert(`Messages sent to ${selectedClients.length} clients!`);
-    setSelectedClients([]);
+
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Send messages to selected clients
+      for (const clientId of selectedClients) {
+        const session = allSessions.find(s => s.id === clientId);
+        if (!session) continue;
+
+        const message = generatePreview(session);
+
+        try {
+          const { data, error } = await supabase.functions.invoke('send-sms', {
+            body: {
+              to: session.phone,
+              message: message
+            }
+          });
+
+          if (error) {
+            console.error(`Failed to send SMS to ${session.clientName}:`, error);
+            errorCount++;
+          } else {
+            console.log(`SMS sent successfully to ${session.clientName}`);
+            successCount++;
+          }
+        } catch (error) {
+          console.error(`Error sending SMS to ${session.clientName}:`, error);
+          errorCount++;
+        }
+      }
+
+      // Show results
+      if (successCount > 0) {
+        toast({
+          title: "Messages Sent",
+          description: `Successfully sent ${successCount} message${successCount > 1 ? 's' : ''}`,
+        });
+      }
+
+      if (errorCount > 0) {
+        toast({
+          title: "Some Messages Failed",
+          description: `${errorCount} message${errorCount > 1 ? 's' : ''} failed to send. Please check your SMS service configuration.`,
+          variant: "destructive",
+        });
+      }
+
+      if (successCount > 0) {
+        setSelectedClients([]);
+      }
+
+    } catch (error) {
+      console.error('Error in handleSendMessages:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send messages. Please check your SMS service configuration.",
+        variant: "destructive",
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   if (loading) {
@@ -307,11 +373,11 @@ const MessagingCenter = () => {
           <div className="flex justify-end">
             <Button
               onClick={handleSendMessages}
-              disabled={selectedClients.length === 0}
+              disabled={selectedClients.length === 0 || sending}
               className="bg-blue-600 hover:bg-blue-700"
             >
               <Send className="w-4 h-4 mr-2" />
-              Send Messages ({selectedClients.length})
+              {sending ? `Sending... (${selectedClients.length})` : `Send Messages (${selectedClients.length})`}
             </Button>
           </div>
         </CardContent>
