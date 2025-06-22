@@ -75,33 +75,56 @@ const CalendarView = () => {
   };
 
   const getSessionForTimeSlot = (date: Date, time: string) => {
+    const targetDateStr = format(date, 'yyyy-MM-dd');
+    
     const session = sessions.find(session => {
-      const sessionDate = new Date(session.date);
-      const isDateMatch = isSameDay(sessionDate, date);
+      // Normalize session date - handle both Date objects and string dates
+      let sessionDateStr: string;
+      if (typeof session.date === 'string') {
+        // If it's already a string, use it as is (assuming it's in YYYY-MM-DD format)
+        sessionDateStr = session.date.split('T')[0]; // Remove time part if present
+      } else {
+        // If it's a Date object, format it
+        sessionDateStr = format(new Date(session.date), 'yyyy-MM-dd');
+      }
       
       // Convert database time format (HH:MM:SS) to calendar time format (HH:MM)
       const sessionTime = session.time.substring(0, 5); // Extract HH:MM from HH:MM:SS
+      
+      const isDateMatch = sessionDateStr === targetDateStr;
       const isTimeMatch = sessionTime === time;
       
-      console.log('Checking session:', { 
-        sessionDate: format(sessionDate, 'yyyy-MM-dd'), 
-        checkDate: format(date, 'yyyy-MM-dd'),
+      console.log('Checking session match:', { 
+        sessionDateStr,
+        targetDateStr,
         sessionTime: sessionTime,
-        originalSessionTime: session.time,
-        checkTime: time,
+        targetTime: time,
         isDateMatch,
         isTimeMatch,
         clientName: session.client_name
       });
+      
       return isDateMatch && isTimeMatch;
     });
+    
     return session;
   };
 
   const getSessionsForDay = (date: Date) => {
+    const targetDateStr = format(date, 'yyyy-MM-dd');
+    
     return sessions.filter(session => {
-      const sessionDate = new Date(session.date);
-      return isSameDay(sessionDate, date);
+      // Normalize session date - handle both Date objects and string dates
+      let sessionDateStr: string;
+      if (typeof session.date === 'string') {
+        sessionDateStr = session.date.split('T')[0]; // Remove time part if present
+      } else {
+        sessionDateStr = format(new Date(session.date), 'yyyy-MM-dd');
+      }
+      
+      const isMatch = sessionDateStr === targetDateStr;
+      console.log('Day session check:', { sessionDateStr, targetDateStr, isMatch, clientName: session.client_name });
+      return isMatch;
     });
   };
 
@@ -115,7 +138,7 @@ const CalendarView = () => {
     );
   }
 
-  console.log('Current sessions:', sessions);
+  console.log('Current sessions for calendar:', sessions);
 
   return (
     <>
