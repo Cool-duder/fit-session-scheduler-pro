@@ -163,7 +163,7 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
             </div>
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label htmlFor="package">Package</Label>
+                <Label htmlFor="package">Package & Price</Label>
                 <Button
                   type="button"
                   variant="ghost"
@@ -187,19 +187,6 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <Label htmlFor="price">Package Price ($)</Label>
-              <Input
-                id="price"
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
-                placeholder="1200"
-                min="0"
-                step="0.01"
-                required
-              />
             </div>
             <div>
               <Label htmlFor="regularSlot">Regular Time Slot</Label>
