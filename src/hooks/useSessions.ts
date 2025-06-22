@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
@@ -47,11 +46,32 @@ export const useSessions = () => {
     try {
       console.log('Adding session to database:', sessionData)
       
+      // Ensure date is in the correct format (YYYY-MM-DD)
+      let formattedDate = sessionData.date;
+      if (sessionData.date) {
+        const dateObj = new Date(sessionData.date);
+        // Check if date is valid
+        if (isNaN(dateObj.getTime())) {
+          throw new Error('Invalid date provided');
+        }
+        // Format date as YYYY-MM-DD for database storage
+        formattedDate = dateObj.toISOString().split('T')[0];
+      }
+      
       // Ensure time is in the correct format (HH:MM:SS)
       let formattedTime = sessionData.time;
-      if (sessionData.time.length === 5) {
-        formattedTime = sessionData.time + ':00'; // Add seconds if not present
+      if (sessionData.time) {
+        if (sessionData.time.length === 5) {
+          formattedTime = sessionData.time + ':00'; // Add seconds if not present
+        }
+        // Validate time format
+        const timeRegex = /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
+        if (!timeRegex.test(formattedTime)) {
+          throw new Error('Invalid time format provided');
+        }
       }
+      
+      console.log('Formatted date:', formattedDate, 'Formatted time:', formattedTime);
       
       // First, get the current sessions_left for the client
       const { data: clientData, error: clientFetchError } = await supabase
@@ -74,7 +94,7 @@ export const useSessions = () => {
         .insert([{
           client_id: sessionData.client_id,
           client_name: sessionData.client_name,
-          date: sessionData.date,
+          date: formattedDate,
           time: formattedTime,
           duration: sessionData.duration,
           package: sessionData.package,
@@ -127,10 +147,26 @@ export const useSessions = () => {
     try {
       console.log('Updating session:', sessionId, updates)
       
+      // Format date if provided
+      if (updates.date) {
+        const dateObj = new Date(updates.date);
+        if (isNaN(dateObj.getTime())) {
+          throw new Error('Invalid date provided');
+        }
+        updates.date = dateObj.toISOString().split('T')[0];
+      }
+      
       // Format time if provided
       if (updates.time && updates.time.length === 5) {
         updates.time = updates.time + ':00'
+        // Validate time format
+        const timeRegex = /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
+        if (!timeRegex.test(updates.time)) {
+          throw new Error('Invalid time format provided');
+        }
       }
+      
+      console.log('Formatted updates:', updates);
       
       const { data, error } = await supabase
         .from('sessions')
@@ -155,7 +191,7 @@ export const useSessions = () => {
       console.error('Error updating session:', error)
       toast({
         title: "Error",
-        description: "Failed to update session",
+        description: error instanceof Error ? error.message : "Failed to update session",
         variant: "destructive",
       })
       throw error

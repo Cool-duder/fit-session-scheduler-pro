@@ -70,25 +70,44 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.client_id && formData.date && formData.time) {
-      onAddSession({
-        client_id: formData.client_id,
-        client_name: formData.client_name,
-        date: formData.date,
-        time: formData.time,
-        duration: formData.duration,
-        package: formData.package
+    
+    // Validate form data
+    if (!formData.client_id || !formData.date || !formData.time) {
+      console.error('Missing required fields:', { 
+        client_id: formData.client_id, 
+        date: formData.date, 
+        time: formData.time 
       });
-      setFormData({
-        client_id: "",
-        client_name: "",
-        date: "",
-        time: "",
-        duration: 60,
-        package: "60min Premium"
-      });
-      setOpen(false);
+      return;
     }
+
+    // Validate date format
+    const dateObj = new Date(formData.date);
+    if (isNaN(dateObj.getTime())) {
+      console.error('Invalid date:', formData.date);
+      return;
+    }
+
+    console.log('Submitting session with data:', formData);
+    
+    onAddSession({
+      client_id: formData.client_id,
+      client_name: formData.client_name,
+      date: formData.date, // Keep as YYYY-MM-DD format from input
+      time: formData.time,
+      duration: formData.duration,
+      package: formData.package
+    });
+    
+    setFormData({
+      client_id: "",
+      client_name: "",
+      date: "",
+      time: "",
+      duration: 60,
+      package: "60min Premium"
+    });
+    setOpen(false);
   };
 
   return (
@@ -131,13 +150,20 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
               id="date"
               type="date"
               value={formData.date}
-              onChange={(e) => setFormData({...formData, date: e.target.value})}
+              onChange={(e) => {
+                console.log('Date input changed:', e.target.value);
+                setFormData({...formData, date: e.target.value});
+              }}
+              min={new Date().toISOString().split('T')[0]} // Prevent selecting past dates
               required
             />
           </div>
           <div>
             <Label htmlFor="time">Time</Label>
-            <Select onValueChange={(value) => setFormData({...formData, time: value})} value={formData.time}>
+            <Select onValueChange={(value) => {
+              console.log('Time selected:', value);
+              setFormData({...formData, time: value});
+            }} value={formData.time}>
               <SelectTrigger>
                 <SelectValue placeholder="Select time (5:00 AM - 10:30 PM)" />
               </SelectTrigger>
