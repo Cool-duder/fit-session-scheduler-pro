@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,19 +34,7 @@ const ClientsView = () => {
     regularSlot: string;
     location: string;
   }) => {
-    addClient({
-      name: newClient.name,
-      email: newClient.email,
-      phone: newClient.phone,
-      package: newClient.package,
-      price: newClient.price,
-      sessions_left: 10,
-      total_sessions: 10,
-      monthly_count: 0,
-      regular_slot: newClient.regularSlot || "TBD",
-      location: newClient.location || "TBD",
-      join_date: new Date().toISOString().split('T')[0]
-    });
+    addClient(newClient);
   };
 
   const handleEditClient = (clientId: string, updatedData: {
