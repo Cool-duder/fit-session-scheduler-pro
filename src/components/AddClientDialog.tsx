@@ -1,8 +1,10 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 
 interface AddClientDialogProps {
@@ -23,19 +25,28 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
     name: "",
     email: "",
     phone: "",
-    package: "60min Premium",
-    price: 120,
+    package: "10x 60MIN",
+    price: 1200,
     regularSlot: "",
     location: ""
   });
 
-  const handlePackageChange = (packageType: string) => {
-    const defaultPrice = packageType === "30min Standard" ? 80 : 120;
-    setFormData({
-      ...formData,
-      package: packageType,
-      price: defaultPrice
-    });
+  const packageOptions = [
+    { value: "5x 30MIN", label: "5x 30MIN", price: 400, sessions: 5 },
+    { value: "10x 30MIN", label: "10x 30MIN", price: 800, sessions: 10 },
+    { value: "5x 60MIN", label: "5x 60MIN", price: 600, sessions: 5 },
+    { value: "10x 60MIN", label: "10x 60MIN", price: 1200, sessions: 10 }
+  ];
+
+  const handlePackageChange = (packageValue: string) => {
+    const selectedPackage = packageOptions.find(pkg => pkg.value === packageValue);
+    if (selectedPackage) {
+      setFormData({
+        ...formData,
+        package: packageValue,
+        price: selectedPackage.price
+      });
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -50,8 +61,8 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
         name: "",
         email: "",
         phone: "",
-        package: "60min Premium",
-        price: 120,
+        package: "10x 60MIN",
+        price: 1200,
         regularSlot: "",
         location: ""
       });
@@ -105,15 +116,18 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
           </div>
           <div>
             <Label htmlFor="package">Package</Label>
-            <select
-              id="package"
-              value={formData.package}
-              onChange={(e) => handlePackageChange(e.target.value)}
-              className="w-full h-10 px-3 py-2 border border-input bg-background rounded-md"
-            >
-              <option value="30min Standard">30min Standard</option>
-              <option value="60min Premium">60min Premium</option>
-            </select>
+            <Select value={formData.package} onValueChange={handlePackageChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a package" />
+              </SelectTrigger>
+              <SelectContent>
+                {packageOptions.map((pkg) => (
+                  <SelectItem key={pkg.value} value={pkg.value}>
+                    {pkg.label} - ${pkg.price}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="price">Package Price ($)</Label>
@@ -122,7 +136,7 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
               type="number"
               value={formData.price}
               onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
-              placeholder="120"
+              placeholder="1200"
               min="0"
               step="0.01"
               required
