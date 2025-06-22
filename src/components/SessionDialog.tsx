@@ -26,9 +26,12 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
     location: "",
     status: "confirmed"
   });
+  // Add state to track the current session data for display
+  const [currentSession, setCurrentSession] = useState<Session | null>(null);
 
   React.useEffect(() => {
     if (session) {
+      setCurrentSession(session);
       setFormData({
         date: session.date,
         time: session.time.substring(0, 5), // Remove seconds for display
@@ -64,13 +67,23 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
   const handleSave = async () => {
     if (session) {
       console.log('Saving session updates:', formData);
-      await onUpdate(session.id, {
+      const updatedSessionData = {
         date: formData.date,
         time: formData.time,
         duration: formData.duration,
         location: formData.location,
         status: formData.status
+      };
+      
+      await onUpdate(session.id, updatedSessionData);
+      
+      // Update the current session display data immediately
+      setCurrentSession({
+        ...session,
+        ...updatedSessionData,
+        time: formData.time.length === 5 ? formData.time + ':00' : formData.time // Ensure proper time format
       });
+      
       setIsEditing(false);
     }
   };
@@ -83,7 +96,7 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
     }
   };
 
-  if (!session) return null;
+  if (!session || !currentSession) return null;
 
   return (
     <>
@@ -116,7 +129,7 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
           <div className="space-y-4">
             <div>
               <Label>Client</Label>
-              <div className="p-2 bg-gray-50 rounded">{session.client_name}</div>
+              <div className="p-2 bg-gray-50 rounded">{currentSession.client_name}</div>
             </div>
             
             <div>
@@ -129,7 +142,7 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
                   onChange={(e) => setFormData({...formData, date: e.target.value})}
                 />
               ) : (
-                <div className="p-2 bg-gray-50 rounded">{new Date(session.date).toLocaleDateString()}</div>
+                <div className="p-2 bg-gray-50 rounded">{new Date(currentSession.date).toLocaleDateString()}</div>
               )}
             </div>
             
@@ -150,7 +163,7 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
                 </Select>
               ) : (
                 <div className="p-2 bg-gray-50 rounded">
-                  {generateTimeSlots().find(slot => slot.value === formData.time)?.label || formData.time}
+                  {generateTimeSlots().find(slot => slot.value === currentSession.time.substring(0, 5))?.label || currentSession.time.substring(0, 5)}
                 </div>
               )}
             </div>
@@ -169,7 +182,7 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="p-2 bg-gray-50 rounded">{session.duration} minutes</div>
+                <div className="p-2 bg-gray-50 rounded">{currentSession.duration} minutes</div>
               )}
             </div>
             
@@ -183,7 +196,7 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
                   placeholder="Training location"
                 />
               ) : (
-                <div className="p-2 bg-gray-50 rounded">{session.location || 'TBD'}</div>
+                <div className="p-2 bg-gray-50 rounded">{currentSession.location || 'TBD'}</div>
               )}
             </div>
             
@@ -201,13 +214,13 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="p-2 bg-gray-50 rounded capitalize">{session.status}</div>
+                <div className="p-2 bg-gray-50 rounded capitalize">{currentSession.status}</div>
               )}
             </div>
             
             <div>
               <Label>Package</Label>
-              <div className="p-2 bg-gray-50 rounded">{session.package}</div>
+              <div className="p-2 bg-gray-50 rounded">{currentSession.package}</div>
             </div>
           </div>
           
@@ -229,7 +242,7 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Session</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this session? This will add one session back to {session.client_name}'s package.
+              Are you sure you want to delete this session? This will add one session back to {currentSession.client_name}'s package.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
