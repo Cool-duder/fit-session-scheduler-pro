@@ -58,14 +58,14 @@ const CalendarView = () => {
     "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30"
   ];
 
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   // Month view calculations
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
-  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
   const monthDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   const navigateWeek = (direction: 'prev' | 'next') => {
@@ -255,7 +255,7 @@ const CalendarView = () => {
           {viewMode === 'month' && (
             <div className="grid grid-cols-7 gap-1">
               {/* Day headers */}
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
                 <div key={day} className="p-2 text-center font-medium text-sm text-gray-600 border-b">
                   {day}
                 </div>
