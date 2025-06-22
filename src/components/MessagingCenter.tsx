@@ -9,14 +9,12 @@ import { Send, Clock, MessageSquare, Users, Mail } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { useSessions } from "@/hooks/useSessions";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const MessagingCenter = () => {
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
   const [messageTemplate, setMessageTemplate] = useState(
     "Hi {clientName}! {messageType} you have a {duration}-minute training session scheduled for {sessionDate} at {time}. See you soon! 💪"
   );
-  const [sending, setSending] = useState(false);
   const { sessions, loading } = useSessions();
   const { toast } = useToast();
 
@@ -95,77 +93,31 @@ const MessagingCenter = () => {
     return `Training Session Reminder - ${sessionDate} at ${session.time}`;
   };
 
-  const handleSendMessages = async () => {
+  const handleSendEmails = () => {
     if (selectedClients.length === 0) return;
 
-    setSending(true);
-    console.log('Sending email notifications to clients:', selectedClients);
+    const selectedSessions = allSessions.filter(s => selectedClients.includes(s.id));
+    
+    // Create mailto links for each selected client
+    const emailLinks = selectedSessions.map(session => {
+      const subject = encodeURIComponent(generateSubject(session));
+      const body = encodeURIComponent(generatePreview(session));
+      return `mailto:${session.email}?subject=${subject}&body=${body}`;
+    });
 
-    try {
-      let successCount = 0;
-      let errorCount = 0;
+    // Open each mailto link (browsers may block multiple windows, so we'll open them one by one with delays)
+    emailLinks.forEach((link, index) => {
+      setTimeout(() => {
+        window.open(link, '_blank');
+      }, index * 500); // 500ms delay between each email
+    });
 
-      // Send emails to selected clients
-      for (const clientId of selectedClients) {
-        const session = allSessions.find(s => s.id === clientId);
-        if (!session) continue;
+    toast({
+      title: "Email Client Opened",
+      description: `Opening your email client for ${selectedClients.length} email${selectedClients.length > 1 ? 's' : ''}. Please send them from your email client.`,
+    });
 
-        const message = generatePreview(session);
-        const subject = generateSubject(session);
-
-        try {
-          const { data, error } = await supabase.functions.invoke('send-email', {
-            body: {
-              to: session.email,
-              subject: subject,
-              message: message,
-              clientName: session.clientName
-            }
-          });
-
-          if (error) {
-            console.error(`Failed to send email to ${session.clientName}:`, error);
-            errorCount++;
-          } else {
-            console.log(`Email sent successfully to ${session.clientName}`);
-            successCount++;
-          }
-        } catch (error) {
-          console.error(`Error sending email to ${session.clientName}:`, error);
-          errorCount++;
-        }
-      }
-
-      // Show results
-      if (successCount > 0) {
-        toast({
-          title: "Emails Sent",
-          description: `Successfully sent ${successCount} email${successCount > 1 ? 's' : ''}`,
-        });
-      }
-
-      if (errorCount > 0) {
-        toast({
-          title: "Some Emails Failed",
-          description: `${errorCount} email${errorCount > 1 ? 's' : ''} failed to send. Please check your email service configuration.`,
-          variant: "destructive",
-        });
-      }
-
-      if (successCount > 0) {
-        setSelectedClients([]);
-      }
-
-    } catch (error) {
-      console.error('Error in handleSendMessages:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send emails. Please check your email service configuration.",
-        variant: "destructive",
-      });
-    } finally {
-      setSending(false);
-    }
+    setSelectedClients([]);
   };
 
   if (loading) {
@@ -227,7 +179,7 @@ const MessagingCenter = () => {
             Client Email Notifications
           </CardTitle>
           <p className="text-sm text-gray-600">
-            Send email reminders for today's and tomorrow's sessions
+            Send email reminders for today's and tomorrow's sessions via your email client
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -390,12 +342,12 @@ const MessagingCenter = () => {
           {/* Send Button */}
           <div className="flex justify-end">
             <Button
-              onClick={handleSendMessages}
-              disabled={selectedClients.length === 0 || sending}
+              onClick={handleSendEmails}
+              disabled={selectedClients.length === 0}
               className="bg-blue-600 hover:bg-blue-700"
             >
               <Send className="w-4 h-4 mr-2" />
-              {sending ? `Sending... (${selectedClients.length})` : `Send Emails (${selectedClients.length})`}
+              Open Email Client ({selectedClients.length})
             </Button>
           </div>
         </CardContent>
