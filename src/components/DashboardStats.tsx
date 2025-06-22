@@ -1,15 +1,36 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Calendar, DollarSign, TrendingUp } from "lucide-react";
+import { useClients } from "@/hooks/useClients";
 
 const DashboardStats = () => {
-  // Mock data - in a real app, this would come from your database
+  const { clients, loading } = useClients();
+  
+  // Mock data for other stats - in a real app, these would come from your database
   const stats = {
-    totalClients: 36,
+    totalClients: clients.length,
     todaySessions: 8,
     monthlyRevenue: 4850,
     completionRate: 94
   };
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i} className="hover:shadow-lg transition-shadow bg-white">
+            <CardContent className="p-6">
+              <div className="animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
