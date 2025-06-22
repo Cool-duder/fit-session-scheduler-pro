@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
@@ -23,6 +22,12 @@ export const useClients = () => {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
+
+  // Helper function to extract sessions from package string
+  const getSessionsFromPackage = (packageStr: string) => {
+    const match = packageStr.match(/(\d+)x/);
+    return match ? parseInt(match[1]) : 10;
+  }
 
   const fetchClients = async () => {
     try {
@@ -102,7 +107,7 @@ export const useClients = () => {
             client_name: client.name,
             date: format(sessionDate, 'yyyy-MM-dd'),
             time: time24h,
-            duration: client.package.includes('60min') ? 60 : 30,
+            duration: client.package.includes('60MIN') ? 60 : 30,
             package: client.package,
             status: 'confirmed',
             location: client.location || 'TBD'
@@ -138,17 +143,29 @@ export const useClients = () => {
     phone: string;
     package: string;
     price: number;
-    sessions_left: number;
-    total_sessions: number;
-    monthly_count: number;
-    regular_slot: string;
+    regularSlot: string;
     location: string;
-    join_date: string;
   }) => {
     try {
+      const totalSessions = getSessionsFromPackage(clientData.package);
+      
+      const newClientData = {
+        name: clientData.name,
+        email: clientData.email,
+        phone: clientData.phone,
+        package: clientData.package,
+        price: clientData.price,
+        sessions_left: totalSessions,
+        total_sessions: totalSessions,
+        monthly_count: 0,
+        regular_slot: clientData.regularSlot,
+        location: clientData.location,
+        join_date: new Date().toISOString().split('T')[0]
+      };
+
       const { data, error } = await supabase
         .from('clients')
-        .insert([clientData])
+        .insert([newClientData])
         .select()
         .single()
 
