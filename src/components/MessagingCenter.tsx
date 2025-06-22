@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Send, Clock, MessageSquare, Users } from "lucide-react";
+import { Send, Clock, MessageSquare, Users, Mail } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { useSessions } from "@/hooks/useSessions";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +26,7 @@ const MessagingCenter = () => {
   const todayDateString = format(today, 'yyyy-MM-dd');
   const tomorrowDateString = format(tomorrow, 'yyyy-MM-dd');
 
-  // Filter sessions for today and tomorrow and add mock phone numbers and sent status
+  // Filter sessions for today and tomorrow and add mock email addresses and sent status
   const todaySessions = sessions
     .filter(session => session.date === todayDateString)
     .map((session, index) => ({
@@ -33,7 +34,7 @@ const MessagingCenter = () => {
       clientName: session.client_name,
       time: session.time.substring(0, 5), // Remove seconds
       duration: session.duration,
-      phone: `+1 (555) ${String(123 + index).padStart(3, '0')}-${String(4567 + index).padStart(4, '0')}`, // Mock phone numbers
+      email: `${session.client_name.toLowerCase().replace(/\s+/g, '.')}@example.com`, // Mock email addresses
       sent: Math.random() > 0.7, // Randomly mark some as sent for demo
       sessionType: 'today' as const,
       date: todayDateString
@@ -46,7 +47,7 @@ const MessagingCenter = () => {
       clientName: session.client_name,
       time: session.time.substring(0, 5), // Remove seconds
       duration: session.duration,
-      phone: `+1 (555) ${String(123 + index + 100).padStart(3, '0')}-${String(4567 + index).padStart(4, '0')}`, // Mock phone numbers
+      email: `${session.client_name.toLowerCase().replace(/\s+/g, '.')}@example.com`, // Mock email addresses
       sent: Math.random() > 0.7, // Randomly mark some as sent for demo
       sessionType: 'tomorrow' as const,
       date: tomorrowDateString
@@ -89,40 +90,48 @@ const MessagingCenter = () => {
       .replace('{time}', session.time);
   };
 
+  const generateSubject = (session: any) => {
+    const sessionDate = session.sessionType === 'today' ? 'Today' : 'Tomorrow';
+    return `Training Session Reminder - ${sessionDate} at ${session.time}`;
+  };
+
   const handleSendMessages = async () => {
     if (selectedClients.length === 0) return;
 
     setSending(true);
-    console.log('Sending messages to clients:', selectedClients);
+    console.log('Sending email notifications to clients:', selectedClients);
 
     try {
       let successCount = 0;
       let errorCount = 0;
 
-      // Send messages to selected clients
+      // Send emails to selected clients
       for (const clientId of selectedClients) {
         const session = allSessions.find(s => s.id === clientId);
         if (!session) continue;
 
         const message = generatePreview(session);
+        const subject = generateSubject(session);
 
         try {
-          const { data, error } = await supabase.functions.invoke('send-sms', {
+          const { data, error } = await supabase.functions.invoke('send-email', {
             body: {
-              to: session.phone,
-              message: message
+              to: session.email,
+              subject: subject,
+              message: message,
+              clientName: session.clientName
             }
           });
 
           if (error) {
-            console.error(`Failed to send SMS to ${session.clientName}:`, error);
+            console.error(`Failed to send email to ${session.clientName}:`, error);
             errorCount++;
           } else {
-            console.log(`SMS sent successfully to ${session.clientName}`);
+            console.log(`Email sent successfully to ${session.clientName}`);
             successCount++;
           }
         } catch (error) {
-          console.error(`Error sending SMS to ${session.clientName}:`, error);
+          console.error(`Error sending email to ${session.clientName}:`, error);
           errorCount++;
         }
       }
@@ -130,15 +139,15 @@ const MessagingCenter = () => {
       // Show results
       if (successCount > 0) {
         toast({
-          title: "Messages Sent",
-          description: `Successfully sent ${successCount} message${successCount > 1 ? 's' : ''}`,
+          title: "Emails Sent",
+          description: `Successfully sent ${successCount} email${successCount > 1 ? 's' : ''}`,
         });
       }
 
       if (errorCount > 0) {
         toast({
-          title: "Some Messages Failed",
-          description: `${errorCount} message${errorCount > 1 ? 's' : ''} failed to send. Please check your SMS service configuration.`,
+          title: "Some Emails Failed",
+          description: `${errorCount} email${errorCount > 1 ? 's' : ''} failed to send. Please check your email service configuration.`,
           variant: "destructive",
         });
       }
@@ -151,7 +160,7 @@ const MessagingCenter = () => {
       console.error('Error in handleSendMessages:', error);
       toast({
         title: "Error",
-        description: "Failed to send messages. Please check your SMS service configuration.",
+        description: "Failed to send emails. Please check your email service configuration.",
         variant: "destructive",
       });
     } finally {
@@ -192,7 +201,7 @@ const MessagingCenter = () => {
 
         <Card className="bg-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Messages Sent</CardTitle>
+            <CardTitle className="text-sm font-medium">Emails Sent</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{sentCount}</div>
@@ -214,17 +223,17 @@ const MessagingCenter = () => {
       <Card className="bg-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5" />
-            Client Notifications
+            <Mail className="w-5 h-5" />
+            Client Email Notifications
           </CardTitle>
           <p className="text-sm text-gray-600">
-            Send reminders for today's and tomorrow's sessions
+            Send email reminders for today's and tomorrow's sessions
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Message Template */}
           <div>
-            <label className="text-sm font-medium mb-2 block">Message Template</label>
+            <label className="text-sm font-medium mb-2 block">Email Message Template</label>
             <Textarea
               value={messageTemplate}
               onChange={(e) => setMessageTemplate(e.target.value)}
@@ -253,7 +262,7 @@ const MessagingCenter = () => {
 
             {allSessions.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <Mail className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>No sessions scheduled for today or tomorrow</p>
                 <p className="text-sm">Check back later or view the calendar to schedule sessions</p>
               </div>
@@ -286,7 +295,10 @@ const MessagingCenter = () => {
                                 <Clock className="w-4 h-4" />
                                 {session.time} ({session.duration} min) - Today
                               </div>
-                              <div className="text-xs text-gray-500">{session.phone}</div>
+                              <div className="text-xs text-gray-500 flex items-center gap-1">
+                                <Mail className="w-3 h-3" />
+                                {session.email}
+                              </div>
                             </div>
                           </div>
                           <div className="text-right">
@@ -333,7 +345,10 @@ const MessagingCenter = () => {
                                 <Clock className="w-4 h-4" />
                                 {session.time} ({session.duration} min) - Tomorrow
                               </div>
-                              <div className="text-xs text-gray-500">{session.phone}</div>
+                              <div className="text-xs text-gray-500 flex items-center gap-1">
+                                <Mail className="w-3 h-3" />
+                                {session.email}
+                              </div>
                             </div>
                           </div>
                           <div className="text-right">
@@ -359,9 +374,12 @@ const MessagingCenter = () => {
           {/* Message Preview */}
           {selectedClients.length > 0 && (
             <div>
-              <label className="text-sm font-medium mb-2 block">Message Preview</label>
+              <label className="text-sm font-medium mb-2 block">Email Preview</label>
               <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="font-medium mb-2">Sample message for {allSessions.find(s => selectedClients.includes(s.id))?.clientName}:</div>
+                <div className="font-medium mb-2">Sample email for {allSessions.find(s => selectedClients.includes(s.id))?.clientName}:</div>
+                <div className="text-sm text-gray-600 mb-2">
+                  <strong>Subject:</strong> {generateSubject(allSessions.find(s => selectedClients.includes(s.id)))}
+                </div>
                 <p className="text-sm italic">
                   {generatePreview(allSessions.find(s => selectedClients.includes(s.id)))}
                 </p>
@@ -377,7 +395,7 @@ const MessagingCenter = () => {
               className="bg-blue-600 hover:bg-blue-700"
             >
               <Send className="w-4 h-4 mr-2" />
-              {sending ? `Sending... (${selectedClients.length})` : `Send Messages (${selectedClients.length})`}
+              {sending ? `Sending... (${selectedClients.length})` : `Send Emails (${selectedClients.length})`}
             </Button>
           </div>
         </CardContent>
