@@ -16,6 +16,7 @@ interface NewSessionDialogProps {
     time: string;
     duration: number;
     package: string;
+    location?: string;
   }) => void;
 }
 
@@ -28,7 +29,8 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
     date: "",
     time: "",
     duration: 60,
-    package: "60min Premium"
+    package: "60min Premium",
+    location: ""
   });
 
   // Generate time slots from 5:00AM to 10:30PM in 30-minute intervals
@@ -63,7 +65,8 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
         client_id: clientId,
         client_name: selectedClient.name,
         package: selectedClient.package,
-        duration: selectedClient.package.includes('60min') ? 60 : 30
+        duration: selectedClient.package.includes('60min') ? 60 : 30,
+        location: selectedClient.location || ""
       });
     }
   };
@@ -96,7 +99,8 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
       date: formData.date, // Keep as YYYY-MM-DD format from input
       time: formData.time,
       duration: formData.duration,
-      package: formData.package
+      package: formData.package,
+      location: formData.location
     });
     
     setFormData({
@@ -105,7 +109,8 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
       date: "",
       time: "",
       duration: 60,
-      package: "60min Premium"
+      package: "60min Premium",
+      location: ""
     });
     setOpen(false);
   };
@@ -175,6 +180,16 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div>
+            <Label htmlFor="location">Location</Label>
+            <Input
+              id="location"
+              type="text"
+              value={formData.location}
+              onChange={(e) => setFormData({...formData, location: e.target.value})}
+              placeholder="Training location (optional)"
+            />
           </div>
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

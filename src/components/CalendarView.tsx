@@ -24,11 +24,13 @@ const CalendarView = () => {
     time: string;
     duration: number;
     package: string;
+    location?: string;
   }) => {
     console.log('Adding new session:', newSession);
     await addSession({
       ...newSession,
-      status: 'confirmed'
+      status: 'confirmed',
+      location: newSession.location || 'TBD'
     });
     // Refetch sessions to ensure calendar updates
     await refetch();
@@ -101,7 +103,8 @@ const CalendarView = () => {
         targetTime: time,
         isDateMatch,
         isTimeMatch,
-        clientName: session.client_name
+        clientName: session.client_name,
+        location: session.location
       });
       
       return isDateMatch && isTimeMatch;
@@ -123,7 +126,7 @@ const CalendarView = () => {
       }
       
       const isMatch = sessionDateStr === targetDateStr;
-      console.log('Day session check:', { sessionDateStr, targetDateStr, isMatch, clientName: session.client_name });
+      console.log('Day session check:', { sessionDateStr, targetDateStr, isMatch, clientName: session.client_name, location: session.location });
       return isMatch;
     });
   };
@@ -227,10 +230,10 @@ const CalendarView = () => {
                               <Clock className="w-3 h-3" />
                               {session.duration}min
                             </div>
-                            {session.location && (
+                            {session.location && session.location !== 'TBD' && (
                               <div className="flex items-center gap-1 text-gray-600 mt-1">
                                 <MapPin className="w-3 h-3" />
-                                <span className="truncate">{session.location}</span>
+                                <span className="truncate text-xs">{session.location}</span>
                               </div>
                             )}
                             <Badge 
@@ -287,6 +290,12 @@ const CalendarView = () => {
                           <div className="text-gray-600">
                             {session.time.substring(0, 5)} ({session.duration}min)
                           </div>
+                          {session.location && session.location !== 'TBD' && (
+                            <div className="flex items-center gap-1 text-gray-600 mt-1">
+                              <MapPin className="w-2 h-2" />
+                              <span className="truncate text-xs">{session.location}</span>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
