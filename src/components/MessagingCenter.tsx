@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Send, Clock, MessageSquare, Users, Mail } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { useSessions } from "@/hooks/useSessions";
+import { useClients } from "@/hooks/useClients";
 import { useToast } from "@/hooks/use-toast";
 
 const MessagingCenter = () => {
@@ -16,6 +16,7 @@ const MessagingCenter = () => {
     "Hi {clientName}! {messageType} you have a {duration}-minute training session scheduled for {sessionDate} at {time}. See you soon! 💪"
   );
   const { sessions, loading } = useSessions();
+  const { clients } = useClients();
   const { toast } = useToast();
 
   // Get today's and tomorrow's dates
@@ -24,7 +25,13 @@ const MessagingCenter = () => {
   const todayDateString = format(today, 'yyyy-MM-dd');
   const tomorrowDateString = format(tomorrow, 'yyyy-MM-dd');
 
-  // Filter sessions for today and tomorrow and add mock email addresses and sent status
+  // Helper function to get client email by client_id
+  const getClientEmail = (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    return client?.email || 'no-email@example.com';
+  };
+
+  // Filter sessions for today and tomorrow and add real email addresses and sent status
   const todaySessions = sessions
     .filter(session => session.date === todayDateString)
     .map((session, index) => ({
@@ -32,10 +39,11 @@ const MessagingCenter = () => {
       clientName: session.client_name,
       time: session.time.substring(0, 5), // Remove seconds
       duration: session.duration,
-      email: `${session.client_name.toLowerCase().replace(/\s+/g, '.')}@example.com`, // Mock email addresses
+      email: getClientEmail(session.client_id), // Use real email from clients table
       sent: Math.random() > 0.7, // Randomly mark some as sent for demo
       sessionType: 'today' as const,
-      date: todayDateString
+      date: todayDateString,
+      client_id: session.client_id
     }));
 
   const tomorrowSessions = sessions
@@ -45,10 +53,11 @@ const MessagingCenter = () => {
       clientName: session.client_name,
       time: session.time.substring(0, 5), // Remove seconds
       duration: session.duration,
-      email: `${session.client_name.toLowerCase().replace(/\s+/g, '.')}@example.com`, // Mock email addresses
+      email: getClientEmail(session.client_id), // Use real email from clients table
       sent: Math.random() > 0.7, // Randomly mark some as sent for demo
       sessionType: 'tomorrow' as const,
-      date: tomorrowDateString
+      date: tomorrowDateString,
+      client_id: session.client_id
     }));
 
   const allSessions = [...todaySessions, ...tomorrowSessions];
