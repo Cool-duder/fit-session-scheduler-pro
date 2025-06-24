@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -197,7 +198,10 @@ const CalendarView = () => {
           {viewMode === 'week' && (
             <div className="grid grid-cols-8 gap-2">
               {/* Time column header */}
-              <div className="font-medium text-sm text-gray-500 p-2">Time</div>
+              <div className="font-medium text-sm text-gray-500 p-2">
+                <div>5AM - 10:30PM</div>
+                <div className="text-xs">New York Time</div>
+              </div>
               
               {/* Day headers */}
               {weekDays.map((day) => (
