@@ -38,7 +38,7 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
     const slots = [];
     for (let hour = 5; hour <= 22; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
-        // Stop at 10:30PM (22:30) - don't go beyond this time
+        // Stop at 10:30PM (22:30) - don't generate 11:00PM slot
         if (hour === 22 && minute > 30) break;
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         const displayTime = formatTimeForDisplay(hour, minute);
