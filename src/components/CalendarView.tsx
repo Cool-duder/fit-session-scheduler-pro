@@ -1,5 +1,3 @@
-
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,12 +50,26 @@ const CalendarView = () => {
     await refetch();
   };
 
-  const timeSlots = [
-    "05:00", "05:30", "06:00", "06:30", "07:00", "07:30", "08:00", "08:30", "09:00", "09:30",
-    "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
-    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
-    "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30"
-  ];
+  const formatTimeForDisplay = (hour: number, minute: number) => {
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+    const displayMinute = minute.toString().padStart(2, '0');
+    return `${displayHour}:${displayMinute} ${period}`;
+  };
+
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = 5; hour <= 22; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        if (hour === 22 && minute > 30) break;
+        const displayTime = formatTimeForDisplay(hour, minute);
+        slots.push(displayTime);
+      }
+    }
+    return slots;
+  };
+
+  const timeSlots = generateTimeSlots();
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -80,6 +92,24 @@ const CalendarView = () => {
   const getSessionForTimeSlot = (date: Date, time: string) => {
     const targetDateStr = format(date, 'yyyy-MM-dd');
     
+    // Convert display time (like "5:00 AM") back to 24-hour format for comparison
+    const convertDisplayTimeTo24Hour = (displayTime: string) => {
+      const [timePart, period] = displayTime.split(' ');
+      const [hourStr, minuteStr] = timePart.split(':');
+      let hour = parseInt(hourStr);
+      const minute = parseInt(minuteStr);
+      
+      if (period === 'PM' && hour !== 12) {
+        hour += 12;
+      } else if (period === 'AM' && hour === 12) {
+        hour = 0;
+      }
+      
+      return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    };
+
+    const targetTime24 = convertDisplayTimeTo24Hour(time);
+    
     const session = sessions.find(session => {
       // Normalize session date - handle both Date objects and string dates
       let sessionDateStr: string;
@@ -95,13 +125,13 @@ const CalendarView = () => {
       const sessionTime = session.time.substring(0, 5); // Extract HH:MM from HH:MM:SS
       
       const isDateMatch = sessionDateStr === targetDateStr;
-      const isTimeMatch = sessionTime === time;
+      const isTimeMatch = sessionTime === targetTime24;
       
       console.log('Checking session match:', { 
         sessionDateStr,
         targetDateStr,
         sessionTime: sessionTime,
-        targetTime: time,
+        targetTime: targetTime24,
         isDateMatch,
         isTimeMatch,
         clientName: session.client_name,
@@ -201,7 +231,7 @@ const CalendarView = () => {
               {/* Time column header */}
               <div className="font-medium text-sm text-gray-500 p-2">
                 <div>Eastern Standard Time</div>
-                <div>5AM - 10:30PM</div>
+                <div>5:00 AM - 10:30 PM</div>
               </div>
               
               {/* Day headers */}
@@ -323,4 +353,3 @@ const CalendarView = () => {
 };
 
 export default CalendarView;
-
