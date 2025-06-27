@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,19 +15,53 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Search, Phone, Mail, Calendar, Package, Trash2, Gift, Users } from "lucide-react";
+import { Search, Phone, Mail, Calendar, Package, Trash2, Gift, Users, Download } from "lucide-react";
 import AddClientDialog from "./AddClientDialog";
 import EditClientDialog from "./EditClientDialog";
 import PaymentStatusBadge from "./PaymentStatusBadge";
 import BirthdayEmailDialog from "./BirthdayEmailDialog";
 import { useClients } from "@/hooks/useClients";
 import { format, parseISO } from "date-fns";
+import * as XLSX from 'xlsx';
 
 const ClientsView = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { clients, loading, addClient, editClient, deleteClient } = useClients();
 
   console.log("ClientsView rendered - clients:", clients, "loading:", loading);
+
+  const exportToExcel = () => {
+    const exportData = clients.map(client => ({
+      'Name': client.name,
+      'Email': client.email,
+      'Phone': client.phone,
+      'Package': client.package,
+      'Price': `$${client.price || 120}`,
+      'Sessions Left': client.sessions_left,
+      'Total Sessions': client.total_sessions,
+      'Monthly Count': client.monthly_count,
+      'Regular Slot': client.regular_slot,
+      'Location': client.location || 'TBD',
+      'Payment Type': client.payment_type || 'Cash',
+      'Join Date': client.join_date,
+      'Birthday': client.birthday ? format(parseISO(client.birthday), 'yyyy-MM-dd') : 'Not set'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Clients');
+
+    // Auto-size columns
+    const colWidths = Object.keys(exportData[0] || {}).map(key => ({
+      wch: Math.max(key.length, 15)
+    }));
+    worksheet['!cols'] = colWidths;
+
+    // Generate filename with current date
+    const filename = `clients_export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+    
+    XLSX.writeFile(workbook, filename);
+  };
 
   const handleAddClient = (newClient: {
     name: string;
@@ -86,7 +119,18 @@ const ClientsView = () => {
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-semibold text-gray-900">Client Management</CardTitle>
-            <AddClientDialog onAddClient={handleAddClient} />
+            <div className="flex gap-2">
+              <Button
+                onClick={exportToExcel}
+                variant="outline"
+                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                disabled={clients.length === 0}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export to Excel
+              </Button>
+              <AddClientDialog onAddClient={handleAddClient} />
+            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
