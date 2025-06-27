@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -141,27 +140,34 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
               ) : (
                 clients.slice(0, 4).map((client) => (
                   <div key={client.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex flex-col space-y-3">
-                      {/* Top row - Avatar and Name */}
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
-                          <AvatarFallback className="bg-blue-100 text-blue-600 font-medium">
+                    <div className="flex items-start justify-between gap-4">
+                      {/* Left section - Avatar and name */}
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10 border-2 border-white shadow-sm flex-shrink-0">
+                          <AvatarFallback className="bg-blue-100 text-blue-600 font-medium text-sm">
                             {client.name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex-1 min-w-0">
+                        <div className="min-w-0">
                           <h3 className="font-medium text-gray-900 truncate">{client.name}</h3>
                           <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Package className="w-3 h-3" />
-                            <span>{client.package}</span>
-                            <span className="mx-1">•</span>
-                            <span className="font-medium text-blue-600">{client.sessions_left} left</span>
+                            <Package className="w-3 h-3 flex-shrink-0" />
+                            <span className="truncate">{client.package}</span>
                           </div>
                         </div>
                       </div>
                       
-                      {/* Contact Information */}
-                      <div className="grid grid-cols-1 gap-2 text-xs text-gray-600">
+                      {/* Right section - Sessions left */}
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-sm font-medium text-blue-600">
+                          {client.sessions_left} left
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Contact and additional info */}
+                    <div className="mt-3 space-y-2">
+                      <div className="grid grid-cols-1 gap-1 text-xs text-gray-600">
                         <div className="flex items-center gap-2">
                           <Mail className="w-3 h-3 flex-shrink-0" />
                           <span className="truncate">{client.email}</span>
@@ -218,28 +224,33 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
               ) : (
                 todaySessions.map((session) => (
                   <div key={session.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex flex-col space-y-3">
-                      {/* Top row - Avatar and Client Name */}
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
-                          <AvatarFallback className="bg-green-100 text-green-600 font-medium">
+                    <div className="flex items-start justify-between gap-4">
+                      {/* Left section - Avatar and client info */}
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10 border-2 border-white shadow-sm flex-shrink-0">
+                          <AvatarFallback className="bg-green-100 text-green-600 font-medium text-sm">
                             {session.client_name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex-1 min-w-0">
+                        <div className="min-w-0">
                           <h3 className="font-medium text-gray-900 truncate">{session.client_name}</h3>
                           <div className="flex items-center gap-1 text-xs text-gray-500">
                             <span className="truncate">{session.package}</span>
-                            <span className="mx-1">•</span>
-                            <Badge variant="outline" className="text-xs px-2 py-0.5">
-                              {session.duration} min
-                            </Badge>
                           </div>
                         </div>
                       </div>
                       
-                      {/* Session Details */}
-                      <div className="grid grid-cols-1 gap-2 text-xs text-gray-600">
+                      {/* Right section - Duration badge */}
+                      <div className="flex-shrink-0">
+                        <Badge variant="outline" className="text-xs px-2 py-0.5">
+                          {session.duration} min
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    {/* Session details */}
+                    <div className="mt-3 space-y-1">
+                      <div className="grid grid-cols-1 gap-1 text-xs text-gray-600">
                         <div className="flex items-center gap-2">
                           <Clock className="w-3 h-3 flex-shrink-0" />
                           <span>{session.time}</span>
