@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
@@ -17,6 +18,7 @@ export type Client = {
   location?: string
   payment_type?: string
   join_date: string
+  birthday?: string
 }
 
 export const useClients = () => {
@@ -147,6 +149,7 @@ export const useClients = () => {
     regularSlot: string;
     location: string;
     paymentType: string;
+    birthday?: string;
   }) => {
     try {
       const totalSessions = getSessionsFromPackage(clientData.package);
@@ -163,7 +166,8 @@ export const useClients = () => {
         regular_slot: clientData.regularSlot,
         location: clientData.location,
         payment_type: clientData.paymentType,
-        join_date: new Date().toISOString().split('T')[0]
+        join_date: new Date().toISOString().split('T')[0],
+        birthday: clientData.birthday || null
       };
 
       const { data, error } = await supabase
@@ -202,6 +206,7 @@ export const useClients = () => {
     regularSlot: string;
     location: string;
     paymentType: string;
+    birthday?: string;
   }) => {
     try {
       const { data, error } = await supabase
@@ -214,7 +219,8 @@ export const useClients = () => {
           price: updatedData.price,
           regular_slot: updatedData.regularSlot,
           location: updatedData.location,
-          payment_type: updatedData.paymentType
+          payment_type: updatedData.paymentType,
+          birthday: updatedData.birthday || null
         })
         .eq('id', clientId)
         .select()

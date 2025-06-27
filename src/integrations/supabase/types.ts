@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       clients: {
         Row: {
+          birthday: string | null
           created_at: string
           email: string
           id: string
@@ -27,6 +28,7 @@ export type Database = {
           total_sessions: number
         }
         Insert: {
+          birthday?: string | null
           created_at?: string
           email: string
           id?: string
@@ -43,6 +45,7 @@ export type Database = {
           total_sessions?: number
         }
         Update: {
+          birthday?: string | null
           created_at?: string
           email?: string
           id?: string

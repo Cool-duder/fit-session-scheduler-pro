@@ -15,6 +15,7 @@ interface EmailRequest {
   subject: string;
   message: string;
   clientName: string;
+  isHtml?: boolean;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -24,30 +25,36 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { to, subject, message, clientName }: EmailRequest = await req.json();
+    const { to, subject, message, clientName, isHtml = false }: EmailRequest = await req.json();
     
     const apiKey = Deno.env.get("RESEND_API_KEY");
     if (!apiKey) {
       throw new Error("Resend API key not configured");
     }
 
-    const emailResponse = await resend.emails.send({
-      from: "Training Notifications <onboarding@resend.dev>",
-      to: [to],
-      subject: subject,
+    const emailContent = isHtml ? {
+      html: message
+    } : {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #333; margin-bottom: 20px;">Training Session Reminder</h2>
           <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-            <p style="margin: 0; font-size: 16px; line-height: 1.5;">${message}</p>
+            <p style="margin: 0; font-size: 16px; line-height: 1.5; white-space: pre-line;">${message}</p>
           </div>
           <div style="border-top: 1px solid #e9ecef; padding-top: 20px; text-align: center;">
             <p style="color: #6c757d; font-size: 14px; margin: 0;">
-              This is an automated reminder for your upcoming training session.
+              This is an automated message from your training team.
             </p>
           </div>
         </div>
-      `,
+      `
+    };
+
+    const emailResponse = await resend.emails.send({
+      from: "Training Notifications <onboarding@resend.dev>",
+      to: [to],
+      subject: subject,
+      ...emailContent,
     });
 
     console.log("Email sent successfully:", emailResponse);
