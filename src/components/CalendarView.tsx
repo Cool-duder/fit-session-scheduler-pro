@@ -1,10 +1,9 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
-import { ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, MapPin, Download } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, subMonths, eachDayOfInterval, isSameMonth } from "date-fns";
 import NewSessionDialog from "./NewSessionDialog";
 import SessionDialog from "./SessionDialog";
@@ -163,6 +162,50 @@ const CalendarView = () => {
     });
   };
 
+  const exportToICalendar = () => {
+    const icalEvents = sessions.map(session => {
+      const sessionDate = new Date(session.date);
+      const [hours, minutes] = session.time.split(':').map(Number);
+      const startDateTime = new Date(sessionDate);
+      startDateTime.setHours(hours, minutes, 0);
+      
+      const endDateTime = new Date(startDateTime);
+      endDateTime.setMinutes(endDateTime.getMinutes() + session.duration);
+
+      const formatICalDate = (date: Date) => {
+        return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      };
+
+      return [
+        'BEGIN:VEVENT',
+        `UID:${session.id}@trainingapp.com`,
+        `DTSTART:${formatICalDate(startDateTime)}`,
+        `DTEND:${formatICalDate(endDateTime)}`,
+        `SUMMARY:Training Session - ${session.client_name}`,
+        `DESCRIPTION:Duration: ${session.duration} minutes\\nPackage: ${session.package}\\nStatus: ${session.status}${session.location ? `\\nLocation: ${session.location}` : ''}`,
+        session.location && session.location !== 'TBD' ? `LOCATION:${session.location}` : '',
+        'END:VEVENT'
+      ].filter(Boolean).join('\r\n');
+    }).join('\r\n');
+
+    const icalContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Training App//Training Sessions//EN',
+      'CALSCALE:GREGORIAN',
+      icalEvents,
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'training-schedule.ics';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return (
       <Card className="bg-white shadow-sm">
@@ -226,7 +269,18 @@ const CalendarView = () => {
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
-              <NewSessionDialog onAddSession={handleAddSession} />
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={exportToICalendar}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Export Calendar
+                </Button>
+                <NewSessionDialog onAddSession={handleAddSession} />
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -265,35 +319,39 @@ const CalendarView = () => {
                     {weekDays.map((day) => {
                       const session = getSessionForTimeSlot(day, time);
                       return (
-                        <div key={`${day.toISOString()}-${time}`} className="min-h-[60px] border-r border-gray-100 last:border-r-0 p-2">
+                        <div key={`${day.toISOString()}-${time}`} className="min-h-[60px] border-r border-gray-100 last:border-r-0 p-1 overflow-hidden">
                           {session && (
                             <div 
-                              className={`p-3 rounded-lg text-xs cursor-pointer hover:shadow-md transition-all duration-200 h-full ${
+                              className={`p-2 rounded-md text-xs cursor-pointer hover:shadow-md transition-all duration-200 h-full flex flex-col justify-between overflow-hidden ${
                                 session.duration === 60 
                                   ? 'bg-blue-50 hover:bg-blue-100 border border-blue-200' 
                                   : 'bg-green-50 hover:bg-green-100 border border-green-200'
                               }`}
                               onClick={() => handleSessionClick(session)}
                             >
-                              <div className="font-semibold text-gray-900 truncate mb-1">
-                                {session.client_name}
-                              </div>
-                              <div className="flex items-center gap-1 text-gray-600 mb-1">
-                                <Clock className="w-3 h-3" />
-                                <span className="text-xs">{session.duration}min</span>
-                              </div>
-                              {session.location && session.location !== 'TBD' && (
-                                <div className="flex items-center gap-1 text-gray-600 mb-2">
-                                  <MapPin className="w-3 h-3" />
-                                  <span className="truncate text-xs">{session.location}</span>
+                              <div className="flex-1 min-h-0">
+                                <div className="font-semibold text-gray-900 truncate text-xs leading-tight mb-1">
+                                  {session.client_name}
                                 </div>
-                              )}
-                              <Badge 
-                                variant={session.status === 'confirmed' ? 'default' : 'secondary'}
-                                className="text-xs px-2 py-0.5"
-                              >
-                                {session.status}
-                              </Badge>
+                                <div className="flex items-center gap-1 text-gray-600 mb-1">
+                                  <Clock className="w-2.5 h-2.5 flex-shrink-0" />
+                                  <span className="text-xs truncate">{session.duration}min</span>
+                                </div>
+                                {session.location && session.location !== 'TBD' && (
+                                  <div className="flex items-center gap-1 text-gray-600 mb-1">
+                                    <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
+                                    <span className="truncate text-xs">{session.location}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-shrink-0 mt-1">
+                                <Badge 
+                                  variant={session.status === 'confirmed' ? 'default' : 'secondary'}
+                                  className="text-xs px-1.5 py-0.5 h-5 text-xs leading-none"
+                                >
+                                  {session.status}
+                                </Badge>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -324,36 +382,42 @@ const CalendarView = () => {
                   return (
                     <div 
                       key={day.toISOString()} 
-                      className={`min-h-[120px] p-3 border-r border-b border-gray-100 last:border-r-0 ${
+                      className={`min-h-[120px] p-2 border-r border-b border-gray-100 last:border-r-0 overflow-hidden ${
                         !isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'
                       } ${isToday ? 'bg-blue-50 border-blue-200' : ''}`}
                     >
                       <div className={`text-sm font-semibold mb-2 ${isToday ? 'text-blue-600' : isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}`}>
                         {format(day, 'd')}
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 overflow-hidden">
                         {daySessions.map((session) => (
                           <div
                             key={session.id}
-                            className={`text-xs p-2 rounded-md cursor-pointer hover:shadow-sm transition-all duration-200 ${
+                            className={`text-xs p-2 rounded-md cursor-pointer hover:shadow-sm transition-all duration-200 overflow-hidden ${
                               session.duration === 60 
                                 ? 'bg-blue-50 hover:bg-blue-100 border border-blue-200' 
                                 : 'bg-green-50 hover:bg-green-100 border border-green-200'
                             }`}
                             onClick={() => handleSessionClick(session)}
                           >
-                            <div className="font-semibold truncate text-gray-900 mb-1">
+                            <div className="font-semibold truncate text-gray-900 mb-1 text-xs leading-tight">
                               {session.client_name}
                             </div>
-                            <div className="text-gray-600 mb-1">
+                            <div className="text-gray-600 mb-1 text-xs truncate">
                               {session.time.substring(0, 5)} ({session.duration}min)
                             </div>
                             {session.location && session.location !== 'TBD' && (
-                              <div className="flex items-center gap-1 text-gray-600">
-                                <MapPin className="w-2 h-2" />
+                              <div className="flex items-center gap-1 text-gray-600 mb-1">
+                                <MapPin className="w-2 h-2 flex-shrink-0" />
                                 <span className="truncate text-xs">{session.location}</span>
                               </div>
                             )}
+                            <Badge 
+                              variant={session.status === 'confirmed' ? 'default' : 'secondary'}
+                              className="text-xs px-1.5 py-0.5 h-4 leading-none"
+                            >
+                              {session.status}
+                            </Badge>
                           </div>
                         ))}
                       </div>
