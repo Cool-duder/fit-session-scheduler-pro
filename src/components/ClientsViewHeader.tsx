@@ -1,9 +1,9 @@
-
 import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Download, Upload } from "lucide-react";
 import AddClientDialog from "./AddClientDialog";
+import BulkClientImport from "./BulkClientImport";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { format, parseISO } from "date-fns";
@@ -148,44 +148,48 @@ const ClientsViewHeader = ({
   };
 
   return (
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex-1 max-w-md">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search clients..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+    <div className="space-y-4">
+      <BulkClientImport onAddClient={onAddClient} />
+      
+      <div className="flex items-center justify-between">
+        <div className="flex-1 max-w-md">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search clients..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </div>
-      </div>
-      <div className="flex gap-2">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".xlsx,.xls"
-          onChange={importFromExcel}
-          className="hidden"
-        />
-        <Button
-          onClick={() => fileInputRef.current?.click()}
-          variant="outline"
-          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          Import from Excel
-        </Button>
-        <Button
-          onClick={exportToExcel}
-          variant="outline"
-          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-          disabled={clients.length === 0}
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Export to Excel
-        </Button>
-        <AddClientDialog onAddClient={onAddClient} />
+        <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={importFromExcel}
+            className="hidden"
+          />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            variant="outline"
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Import from Excel
+          </Button>
+          <Button
+            onClick={exportToExcel}
+            variant="outline"
+            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+            disabled={clients.length === 0}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export to Excel
+          </Button>
+          <AddClientDialog onAddClient={onAddClient} />
+        </div>
       </div>
     </div>
   );
