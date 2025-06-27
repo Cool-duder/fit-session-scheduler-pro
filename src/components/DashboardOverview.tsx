@@ -13,16 +13,13 @@ import {
   MapPin,
   Mail,
   Phone,
-  Package,
-  Gift,
-  Cake
+  Package
 } from "lucide-react";
 import { useClients } from "@/hooks/useClients";
 import { useSessions } from "@/hooks/useSessions";
 import { usePayments } from "@/hooks/usePayments";
-import { format, isToday, isTomorrow, parseISO } from "date-fns";
 import AddClientDialog from "./AddClientDialog";
-import BirthdayEmailDialog from "./BirthdayEmailDialog";
+import BirthdayAlert from "./BirthdayAlert";
 
 interface DashboardOverviewProps {
   onNavigate: (tab: string) => void;
@@ -47,32 +44,6 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
     addClient(newClient);
   };
 
-  const getBirthdayStatus = (birthday?: string) => {
-    if (!birthday) return null;
-    
-    try {
-      const birthDate = parseISO(birthday);
-      const today = new Date();
-      const thisYearBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-      
-      if (isToday(thisYearBirthday)) {
-        return { status: 'today', text: 'Today!', color: 'bg-pink-500' };
-      } else if (isTomorrow(thisYearBirthday)) {
-        return { status: 'tomorrow', text: 'Tomorrow', color: 'bg-orange-500' };
-      }
-      
-      // Check if birthday is within next 7 days
-      const daysUntil = Math.ceil((thisYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysUntil > 0 && daysUntil <= 7) {
-        return { status: 'soon', text: `In ${daysUntil} days`, color: 'bg-blue-500' };
-      }
-      
-      return null;
-    } catch {
-      return null;
-    }
-  };
-
   // Get today's sessions
   const todaySessions = sessions.filter(session => {
     const sessionDate = new Date(session.date);
@@ -82,25 +53,6 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
 
   // Calculate total revenue
   const totalRevenue = payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
-
-  // Get clients with upcoming birthdays
-  const clientsWithUpcomingBirthdays = clients
-    .filter(client => {
-      const birthdayStatus = getBirthdayStatus(client.birthday);
-      return birthdayStatus !== null;
-    })
-    .sort((a, b) => {
-      const statusA = getBirthdayStatus(a.birthday);
-      const statusB = getBirthdayStatus(b.birthday);
-      
-      // Sort by priority: today, tomorrow, then by days until birthday
-      if (statusA?.status === 'today') return -1;
-      if (statusB?.status === 'today') return 1;
-      if (statusA?.status === 'tomorrow') return -1;
-      if (statusB?.status === 'tomorrow') return 1;
-      
-      return 0;
-    });
 
   return (
     <div className="space-y-6">
@@ -163,57 +115,8 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
         </Card>
       </div>
 
-      {/* Upcoming Birthdays Alert */}
-      {clientsWithUpcomingBirthdays.length > 0 && (
-        <Card className="bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-pink-700">
-              <Cake className="w-5 h-5" />
-              Upcoming Birthdays 🎉
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {clientsWithUpcomingBirthdays.slice(0, 3).map((client) => {
-                const birthdayStatus = getBirthdayStatus(client.birthday);
-                return (
-                  <div key={client.id} className="flex items-center justify-between bg-white p-3 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-sm">
-                          {client.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{client.name}</p>
-                        <p className="text-sm text-gray-600">
-                          {format(parseISO(client.birthday!), 'MMM dd')}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {birthdayStatus && (
-                        <Badge className={`${birthdayStatus.color} text-white`}>
-                          {birthdayStatus.text}
-                        </Badge>
-                      )}
-                      <BirthdayEmailDialog 
-                        client={client} 
-                        trigger={
-                          <Button size="sm" className="bg-pink-500 hover:bg-pink-600">
-                            <Gift className="w-3 h-3 mr-1" />
-                            Send Wishes
-                          </Button>
-                        }
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Birthday Alert */}
+      <BirthdayAlert clients={clients} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Client Information */}
@@ -235,65 +138,37 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
                   <p className="text-sm">Add your first client to get started</p>
                 </div>
               ) : (
-                clients.slice(0, 5).map((client) => {
-                  const birthdayStatus = getBirthdayStatus(client.birthday);
-                  return (
-                    <div key={client.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback>
-                            {client.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-medium">{client.name}</h3>
-                            {birthdayStatus && (
-                              <Badge className={`${birthdayStatus.color} text-white text-xs`}>
-                                <Cake className="w-2 h-2 mr-1" />
-                                {birthdayStatus.text}
-                              </Badge>
-                            )}
+                clients.slice(0, 5).map((client) => (
+                  <div key={client.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback>
+                          {client.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-medium">{client.name}</h3>
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Mail className="w-3 h-3" />
+                            {client.email}
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
-                            <div className="flex items-center gap-1">
-                              <Mail className="w-3 h-3" />
-                              {client.email}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Phone className="w-3 h-3" />
-                              {client.phone}
-                            </div>
+                          <div className="flex items-center gap-1">
+                            <Phone className="w-3 h-3" />
+                            {client.phone}
                           </div>
-                          {client.birthday && (
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <Gift className="w-3 h-3" />
-                              Birthday: {format(parseISO(client.birthday), 'MMM dd')}
-                            </div>
-                          )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <Badge variant="secondary" className="mb-1">
-                          <Package className="w-3 h-3 mr-1" />
-                          {client.package}
-                        </Badge>
-                        <p className="text-sm text-gray-600">{client.sessions_left} sessions left</p>
-                        {client.birthday && (
-                          <BirthdayEmailDialog 
-                            client={client} 
-                            trigger={
-                              <Button size="sm" className="bg-pink-500 hover:bg-pink-600 text-xs mt-1">
-                                <Gift className="w-3 h-3 mr-1" />
-                                Birthday
-                              </Button>
-                            }
-                          />
-                        )}
-                      </div>
                     </div>
-                  );
-                })
+                    <div className="text-right">
+                      <Badge variant="secondary" className="mb-1">
+                        <Package className="w-3 h-3 mr-1" />
+                        {client.package}
+                      </Badge>
+                      <p className="text-sm text-gray-600">{client.sessions_left} sessions left</p>
+                    </div>
+                  </div>
+                ))
               )}
               
               {clients.length > 5 && (
