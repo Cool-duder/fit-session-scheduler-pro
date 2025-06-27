@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Calendar, Clock, MapPin, DollarSign } from "lucide-react";
+import { Edit, Calendar, Clock, MapPin, DollarSign, Gift } from "lucide-react";
 import { Client } from "@/hooks/useClients";
 import { useSessions, Session } from "@/hooks/useSessions";
 import { usePackages } from "@/hooks/usePackages";
@@ -28,6 +28,7 @@ interface EditClientDialogProps {
     regularSlot: string;
     location: string;
     paymentType: string;
+    birthday?: string;
   }) => void;
 }
 
@@ -42,7 +43,8 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     price: client.price || 120,
     regularSlot: client.regular_slot,
     location: client.location || "",
-    paymentType: client.payment_type || "Cash"
+    paymentType: client.payment_type || "Cash",
+    birthday: client.birthday || ""
   });
   
   const { sessions } = useSessions();
@@ -78,7 +80,8 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
         ...formData,
         regularSlot: formData.regularSlot,
         location: formData.location,
-        paymentType: formData.paymentType
+        paymentType: formData.paymentType,
+        birthday: formData.birthday || undefined
       });
       setOpen(false);
     }
@@ -139,6 +142,19 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                   placeholder="+1 (555) 123-4567"
                   required
                 />
+              </div>
+              <div>
+                <Label htmlFor="edit-birthday">Birthday</Label>
+                <Input
+                  id="edit-birthday"
+                  type="date"
+                  value={formData.birthday}
+                  onChange={(e) => setFormData({...formData, birthday: e.target.value})}
+                  placeholder="Select birthday"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Optional: Add birthday for special occasion reminders
+                </p>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -214,6 +230,15 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                 <span className="text-sm font-medium">Preferred Payment:</span>
                 <PaymentStatusBadge status="completed" paymentType={client.payment_type || 'Cash'} />
               </div>
+              {formData.birthday && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Birthday:</span>
+                  <div className="flex items-center gap-1 text-pink-600">
+                    <Gift className="w-3 h-3" />
+                    <span className="text-sm">{format(new Date(formData.birthday), 'MMM dd, yyyy')}</span>
+                  </div>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Sessions Remaining:</span>
                 <span className="font-bold text-green-600">{client.sessions_left}</span>
