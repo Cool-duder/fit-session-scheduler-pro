@@ -13,12 +13,14 @@ import {
   MapPin,
   Mail,
   Phone,
-  Package
+  Package,
+  Gift
 } from "lucide-react";
 import { useClients } from "@/hooks/useClients";
 import { useSessions } from "@/hooks/useSessions";
 import { usePayments } from "@/hooks/usePayments";
 import AddClientDialog from "./AddClientDialog";
+import { format, parseISO } from "date-fns";
 
 interface DashboardOverviewProps {
   onNavigate: (tab: string) => void;
@@ -116,63 +118,74 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Client Information */}
-        <Card className="bg-white">
-          <CardHeader>
+        <Card className="bg-white shadow-sm border">
+          <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
-              <CardTitle>Client Information</CardTitle>
+              <CardTitle className="text-lg font-semibold text-gray-900">Client Information</CardTitle>
               <AddClientDialog onAddClient={handleAddClient} />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="pt-0">
+            <div className="space-y-3">
               {clientsLoading ? (
-                <div className="text-center py-4">Loading clients...</div>
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-500 mt-2">Loading clients...</p>
+                </div>
               ) : clients.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                  <p>No clients added yet</p>
-                  <p className="text-sm">Add your first client to get started</p>
+                <div className="text-center py-12 text-gray-500">
+                  <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p className="font-medium">No clients added yet</p>
+                  <p className="text-sm text-gray-400">Add your first client to get started</p>
                 </div>
               ) : (
-                clients.slice(0, 5).map((client) => (
-                  <div key={client.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                clients.slice(0, 4).map((client) => (
+                  <div key={client.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex items-center space-x-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback>
+                      <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+                        <AvatarFallback className="bg-blue-100 text-blue-600 font-medium">
                           {client.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <h3 className="font-medium">{client.name}</h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900">{client.name}</h3>
+                        <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
                           <div className="flex items-center gap-1">
                             <Mail className="w-3 h-3" />
-                            {client.email}
+                            <span className="truncate max-w-[120px]">{client.email}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Phone className="w-3 h-3" />
                             {client.phone}
                           </div>
                         </div>
+                        {client.birthday && (
+                          <div className="flex items-center gap-1 text-xs text-pink-600 mt-1">
+                            <Gift className="w-3 h-3" />
+                            Birthday: {format(parseISO(client.birthday), 'MMM dd')}
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <Badge variant="secondary" className="mb-1">
+                    <div className="text-right space-y-1">
+                      <Badge variant="outline" className="text-xs px-2 py-1">
                         <Package className="w-3 h-3 mr-1" />
                         {client.package}
                       </Badge>
-                      <p className="text-sm text-gray-600">{client.sessions_left} sessions left</p>
+                      <p className="text-xs text-gray-600">
+                        <span className="font-medium text-blue-600">{client.sessions_left}</span> sessions left
+                      </p>
                     </div>
                   </div>
                 ))
               )}
               
-              {clients.length > 5 && (
-                <div className="text-center">
+              {clients.length > 4 && (
+                <div className="pt-2">
                   <Button 
                     variant="outline" 
                     onClick={() => onNavigate('clients')}
-                    className="w-full"
+                    className="w-full text-sm"
                   >
                     View All Clients ({clients.length})
                   </Button>
@@ -183,52 +196,62 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
         </Card>
 
         {/* Today's Schedule */}
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle>Today's Schedule</CardTitle>
+        <Card className="bg-white shadow-sm border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold text-gray-900">Today's Schedule</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="pt-0">
+            <div className="space-y-3">
               {sessionsLoading ? (
-                <div className="text-center py-4">Loading sessions...</div>
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+                  <p className="text-gray-500 mt-2">Loading sessions...</p>
+                </div>
               ) : todaySessions.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Clock className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                  <p>No sessions scheduled for today</p>
+                <div className="text-center py-12 text-gray-500">
+                  <Clock className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p className="font-medium">No sessions scheduled today</p>
+                  <p className="text-sm text-gray-400">Your schedule is clear</p>
                 </div>
               ) : (
                 todaySessions.map((session) => (
-                  <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={session.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex items-center space-x-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback>
+                      <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+                        <AvatarFallback className="bg-green-100 text-green-600 font-medium">
                           {session.client_name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <h3 className="font-medium">{session.client_name}</h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Clock className="w-4 h-4" />
-                          {session.time}
-                          <MapPin className="w-4 h-4 ml-2" />
-                          {session.location}
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900">{session.client_name}</h3>
+                        <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {session.time}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            <span className="truncate max-w-[100px]">{session.location}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <Badge variant="outline">{session.duration} min</Badge>
-                      <p className="text-sm text-gray-600 mt-1">{session.package}</p>
+                    <div className="text-right space-y-1">
+                      <Badge variant="outline" className="text-xs px-2 py-1">
+                        {session.duration} min
+                      </Badge>
+                      <p className="text-xs text-gray-600 truncate max-w-[80px]">{session.package}</p>
                     </div>
                   </div>
                 ))
               )}
               
               {todaySessions.length > 0 && (
-                <div className="text-center">
+                <div className="pt-2">
                   <Button 
                     variant="outline" 
                     onClick={() => onNavigate('calendar')}
-                    className="w-full"
+                    className="w-full text-sm"
                   >
                     View Full Calendar
                   </Button>
