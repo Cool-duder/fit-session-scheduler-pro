@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -156,19 +157,6 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label htmlFor="edit-price">Package Price ($)</Label>
-                <Input
-                  id="edit-price"
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
-                  placeholder="120"
-                  min="0"
-                  step="0.01"
-                  required
-                />
               </div>
               <PaymentTypeSelect
                 value={formData.paymentType}
