@@ -19,6 +19,7 @@ interface AddClientDialogProps {
     regularSlot: string;
     location: string;
     paymentType: string;
+    birthday?: string;
   }) => void;
 }
 
@@ -34,7 +35,8 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
     price: 0,
     regularSlot: "",
     location: "",
-    paymentType: "Cash"
+    paymentType: "Cash",
+    birthday: ""
   });
 
   const handlePackageChange = (packageName: string) => {
@@ -55,7 +57,8 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
         ...formData,
         regularSlot: formData.regularSlot,
         location: formData.location,
-        paymentType: formData.paymentType
+        paymentType: formData.paymentType,
+        birthday: formData.birthday || undefined
       });
       setFormData({
         name: "",
@@ -65,7 +68,8 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
         price: 0,
         regularSlot: "",
         location: "",
-        paymentType: "Cash"
+        paymentType: "Cash",
+        birthday: ""
       });
       setOpen(false);
     }
@@ -114,6 +118,15 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
               onChange={(e) => setFormData({...formData, phone: e.target.value})}
               placeholder="+1 (555) 123-4567"
               required
+            />
+          </div>
+          <div>
+            <Label htmlFor="birthday">Birthday (Optional)</Label>
+            <Input
+              id="birthday"
+              type="date"
+              value={formData.birthday}
+              onChange={(e) => setFormData({...formData, birthday: e.target.value})}
             />
           </div>
           <div>

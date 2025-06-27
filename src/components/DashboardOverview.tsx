@@ -19,7 +19,6 @@ import { useClients } from "@/hooks/useClients";
 import { useSessions } from "@/hooks/useSessions";
 import { usePayments } from "@/hooks/usePayments";
 import AddClientDialog from "./AddClientDialog";
-import BirthdayAlert from "./BirthdayAlert";
 
 interface DashboardOverviewProps {
   onNavigate: (tab: string) => void;
@@ -114,9 +113,6 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Birthday Alert */}
-      <BirthdayAlert clients={clients} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Client Information */}
