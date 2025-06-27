@@ -26,8 +26,8 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
             View Schedule
           </Button>
           <Button 
-            variant="outline" 
-            className="border-white text-white hover:bg-white hover:text-blue-600"
+            variant="secondary" 
+            className="bg-white text-purple-600 hover:bg-purple-50 border-white"
             onClick={() => onNavigate('clients')}
           >
             <Users className="w-4 h-4 mr-2" />
