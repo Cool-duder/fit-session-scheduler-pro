@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Settings, Plus, Edit2, Trash2 } from "lucide-react";
+import { Settings, Plus, Edit2, Trash2, DollarSign } from "lucide-react";
 import { usePackages, Package } from "@/hooks/usePackages";
 
 const PackageManagementDialog = () => {
@@ -136,7 +137,10 @@ const PackageManagementDialog = () => {
                     </div>
                     
                     <div>
-                      <Label htmlFor="price">Price ($)</Label>
+                      <Label htmlFor="price" className="flex items-center gap-1">
+                        <DollarSign className="w-3 h-3" />
+                        Price ($)
+                      </Label>
                       <Input
                         id="price"
                         type="number"
@@ -144,6 +148,7 @@ const PackageManagementDialog = () => {
                         onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
                         min="0"
                         step="0.01"
+                        placeholder="Enter price"
                         required
                       />
                     </div>
@@ -175,28 +180,41 @@ const PackageManagementDialog = () => {
             <h3 className="text-lg font-semibold">Existing Packages</h3>
             <div className="grid gap-4">
               {packages.map((pkg) => (
-                <Card key={pkg.id}>
+                <Card key={pkg.id} className="hover:shadow-lg transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">{pkg.name}</h4>
-                        <p className="text-sm text-gray-600">
-                          {pkg.sessions} sessions × {pkg.duration} minutes - ${pkg.price}
-                        </p>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-lg">{pkg.name}</h4>
+                        <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                          <span>{pkg.sessions} sessions</span>
+                          <span>×</span>
+                          <span>{pkg.duration} minutes</span>
+                          <span className="flex items-center gap-1 font-semibold text-green-600">
+                            <DollarSign className="w-3 h-3" />
+                            {pkg.price}
+                          </span>
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleEdit(pkg)}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                         >
-                          <Edit2 className="w-3 h-3" />
+                          <Edit2 className="w-3 h-3 mr-1" />
+                          Edit
                         </Button>
                         
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                              <Trash2 className="w-3 h-3" />
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-3 h-3 mr-1" />
+                              Delete
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
