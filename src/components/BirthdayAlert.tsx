@@ -7,16 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Cake, Gift } from "lucide-react";
 import { format, isToday, isTomorrow, parseISO } from "date-fns";
 import BirthdayEmailDialog from "./BirthdayEmailDialog";
-
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  package: string;
-  sessions_left: number;
-  birthday?: string;
-}
+import { Client } from "@/hooks/useClients";
 
 interface BirthdayAlertProps {
   clients: Client[];
