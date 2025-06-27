@@ -30,7 +30,15 @@ export const usePayments = () => {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setPayments(data || [])
+      
+      // Type cast the data to ensure proper typing
+      const typedData = (data || []).map(payment => ({
+        ...payment,
+        payment_type: payment.payment_type as 'Cash' | 'Venmo' | 'Check' | 'Zelle',
+        payment_status: payment.payment_status as 'pending' | 'completed' | 'failed'
+      }))
+      
+      setPayments(typedData)
     } catch (error) {
       console.error('Error fetching payments:', error)
       toast({
@@ -53,13 +61,20 @@ export const usePayments = () => {
 
       if (error) throw error
       
-      setPayments(prev => [data, ...prev])
+      // Type cast the returned data
+      const typedData = {
+        ...data,
+        payment_type: data.payment_type as 'Cash' | 'Venmo' | 'Check' | 'Zelle',
+        payment_status: data.payment_status as 'pending' | 'completed' | 'failed'
+      }
+      
+      setPayments(prev => [typedData, ...prev])
       toast({
         title: "Success",
         description: "Payment recorded successfully",
       })
       
-      return data
+      return typedData
     } catch (error) {
       console.error('Error adding payment:', error)
       toast({
@@ -82,8 +97,15 @@ export const usePayments = () => {
 
       if (error) throw error
       
+      // Type cast the returned data
+      const typedData = {
+        ...data,
+        payment_type: data.payment_type as 'Cash' | 'Venmo' | 'Check' | 'Zelle',
+        payment_status: data.payment_status as 'pending' | 'completed' | 'failed'
+      }
+      
       setPayments(prev => prev.map(payment => 
-        payment.id === paymentId ? data : payment
+        payment.id === paymentId ? typedData : payment
       ))
       
       toast({
@@ -91,7 +113,7 @@ export const usePayments = () => {
         description: "Payment updated successfully",
       })
       
-      return data
+      return typedData
     } catch (error) {
       console.error('Error updating payment:', error)
       toast({

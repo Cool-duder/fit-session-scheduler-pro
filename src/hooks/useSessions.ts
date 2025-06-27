@@ -12,6 +12,8 @@ export type Session = {
   package: string
   status: string
   location?: string
+  payment_type?: string
+  payment_status?: string
 }
 
 export const useSessions = () => {

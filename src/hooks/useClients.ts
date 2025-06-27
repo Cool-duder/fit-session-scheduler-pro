@@ -15,6 +15,7 @@ export type Client = {
   monthly_count: number
   regular_slot: string
   location?: string
+  payment_type?: string
   join_date: string
 }
 
@@ -145,6 +146,7 @@ export const useClients = () => {
     price: number;
     regularSlot: string;
     location: string;
+    paymentType: string;
   }) => {
     try {
       const totalSessions = getSessionsFromPackage(clientData.package);
@@ -160,6 +162,7 @@ export const useClients = () => {
         monthly_count: 0,
         regular_slot: clientData.regularSlot,
         location: clientData.location,
+        payment_type: clientData.paymentType,
         join_date: new Date().toISOString().split('T')[0]
       };
 
@@ -198,6 +201,7 @@ export const useClients = () => {
     price: number;
     regularSlot: string;
     location: string;
+    paymentType: string;
   }) => {
     try {
       const { data, error } = await supabase
@@ -209,7 +213,8 @@ export const useClients = () => {
           package: updatedData.package,
           price: updatedData.price,
           regular_slot: updatedData.regularSlot,
-          location: updatedData.location
+          location: updatedData.location,
+          payment_type: updatedData.paymentType
         })
         .eq('id', clientId)
         .select()
