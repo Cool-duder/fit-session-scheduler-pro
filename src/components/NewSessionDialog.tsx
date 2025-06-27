@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { useClients } from "@/hooks/useClients";
+import { usePackages } from "@/hooks/usePackages";
 
 interface NewSessionDialogProps {
   onAddSession: (session: {
@@ -22,13 +24,14 @@ interface NewSessionDialogProps {
 const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
   const [open, setOpen] = useState(false);
   const { clients, loading } = useClients();
+  const { packages } = usePackages();
   const [formData, setFormData] = useState({
     client_id: "",
     client_name: "",
     date: "",
     time: "",
     duration: 60,
-    package: "60MIN Premium",
+    package: "",
     location: ""
   });
 
@@ -67,12 +70,16 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
   const handleClientSelect = (clientId: string) => {
     const selectedClient = clients.find(c => c.id === clientId);
     if (selectedClient) {
+      // Find matching package to get duration
+      const matchingPackage = packages.find(pkg => pkg.name === selectedClient.package);
+      const duration = matchingPackage ? matchingPackage.duration : 60;
+      
       setFormData({
         ...formData,
         client_id: clientId,
         client_name: selectedClient.name,
         package: selectedClient.package,
-        duration: selectedClient.package.includes('60MIN Premium') ? 60 : 30,
+        duration: duration,
         location: selectedClient.location || ""
       });
     }
@@ -116,7 +123,7 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
       date: "",
       time: "",
       duration: 60,
-      package: "60MIN Premium",
+      package: "",
       location: ""
     });
     setOpen(false);

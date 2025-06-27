@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit, Calendar, Clock, MapPin, DollarSign } from "lucide-react";
 import { Client } from "@/hooks/useClients";
 import { useSessions, Session } from "@/hooks/useSessions";
+import { usePackages } from "@/hooks/usePackages";
 import { format } from "date-fns";
 import PaymentTypeSelect from "./PaymentTypeSelect";
 import PaymentStatusBadge from "./PaymentStatusBadge";
@@ -29,12 +32,13 @@ interface EditClientDialogProps {
 
 const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   const [open, setOpen] = useState(false);
+  const { packages } = usePackages();
   const [formData, setFormData] = useState({
     name: client.name,
     email: client.email,
     phone: client.phone,
     package: client.package,
-    price: client.price || (client.package.includes('60MIN Premium') ? 120 : 80),
+    price: client.price || 120,
     regularSlot: client.regular_slot,
     location: client.location || "",
     paymentType: client.payment_type || "Cash"
@@ -55,13 +59,15 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     }
   }, [open, sessions, client.id]);
 
-  const handlePackageChange = (packageType: string) => {
-    const defaultPrice = packageType === "30MIN Standard" ? 80 : 120;
-    setFormData({
-      ...formData,
-      package: packageType,
-      price: defaultPrice
-    });
+  const handlePackageChange = (packageName: string) => {
+    const selectedPackage = packages.find(pkg => pkg.name === packageName);
+    if (selectedPackage) {
+      setFormData({
+        ...formData,
+        package: packageName,
+        price: selectedPackage.price
+      });
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -135,15 +141,18 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
               </div>
               <div>
                 <Label htmlFor="edit-package">Package</Label>
-                <select
-                  id="edit-package"
-                  value={formData.package}
-                  onChange={(e) => handlePackageChange(e.target.value)}
-                  className="w-full h-10 px-3 py-2 border border-input bg-background rounded-md"
-                >
-                  <option value="30MIN Standard">30MIN Standard</option>
-                  <option value="60MIN Premium">60MIN Premium</option>
-                </select>
+                <Select value={formData.package} onValueChange={handlePackageChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a package" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {packages.map((pkg) => (
+                      <SelectItem key={pkg.id} value={pkg.name}>
+                        {pkg.name} - ${pkg.price}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="edit-price">Package Price ($)</Label>
@@ -206,7 +215,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
             <div className="bg-gray-50 p-4 rounded-lg space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Package:</span>
-                <Badge variant={client.package.includes('60MIN Premium') ? 'default' : 'secondary'}>
+                <Badge variant={client.package.includes('60MIN') ? 'default' : 'secondary'}>
                   {client.package}
                 </Badge>
               </div>
