@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -15,18 +15,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Search, Phone, Mail, Calendar, Package, Trash2, Gift, Users, Download } from "lucide-react";
+import { Search, Phone, Mail, Calendar, Package, Trash2, Gift, Users, Download, Upload } from "lucide-react";
 import AddClientDialog from "./AddClientDialog";
 import EditClientDialog from "./EditClientDialog";
 import PaymentStatusBadge from "./PaymentStatusBadge";
 import BirthdayEmailDialog from "./BirthdayEmailDialog";
 import { useClients } from "@/hooks/useClients";
 import { format, parseISO } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 
 const ClientsView = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { clients, loading, addClient, editClient, deleteClient } = useClients();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   console.log("ClientsView rendered - clients:", clients, "loading:", loading);
 
@@ -61,6 +64,92 @@ const ClientsView = () => {
     const filename = `clients_export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
     
     XLSX.writeFile(workbook, filename);
+  };
+
+  const importFromExcel = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const row of jsonData) {
+        try {
+          const rowData = row as any;
+          
+          // Extract data from various possible column names
+          const name = rowData.Name || rowData.name || rowData['Full Name'] || '';
+          const email = rowData.Email || rowData.email || '';
+          const phone = rowData.Phone || rowData.phone || rowData.M || rowData['Phone Number'] || '';
+          const location = rowData.Location || rowData.location || 'TBD';
+          let birthday = rowData.Birthday || rowData.birthday || rowData['Birth Date'] || '';
+          
+          // Parse birthday if it's in MM-DD format or other formats
+          if (birthday) {
+            if (birthday.toString().includes('/')) {
+              // Handle MM/DD/YY or MM/DD/YYYY format
+              const parts = birthday.toString().split('/');
+              if (parts.length >= 2) {
+                const month = parts[0].padStart(2, '0');
+                const day = parts[1].padStart(2, '0');
+                const year = parts[2] ? (parts[2].length === 2 ? `20${parts[2]}` : parts[2]) : new Date().getFullYear();
+                birthday = `${year}-${month}-${day}`;
+              }
+            } else if (birthday.toString().includes('-') && birthday.toString().length <= 5) {
+              // Handle MM-DD format
+              const currentYear = new Date().getFullYear();
+              birthday = `${currentYear}-${birthday}`;
+            }
+          }
+
+          if (name && email) {
+            await addClient({
+              name: name.toString().trim(),
+              email: email.toString().trim(),
+              phone: phone.toString().trim(),
+              package: rowData.Package || rowData.package || '10x 30MIN Basic',
+              price: Number(rowData.Price?.toString().replace('$', '')) || 120,
+              regularSlot: rowData['Regular Slot'] || rowData.regularSlot || 'TBD',
+              location: location.toString().trim(),
+              paymentType: rowData['Payment Type'] || rowData.paymentType || 'Cash',
+              birthday: birthday || undefined
+            });
+            successCount++;
+          } else {
+            console.warn('Skipping row due to missing name or email:', rowData);
+            errorCount++;
+          }
+        } catch (error) {
+          console.error('Error importing row:', error);
+          errorCount++;
+        }
+      }
+
+      toast({
+        title: "Import Complete",
+        description: `Successfully imported ${successCount} clients. ${errorCount > 0 ? `${errorCount} rows had errors.` : ''}`,
+      });
+
+    } catch (error) {
+      console.error('Error reading Excel file:', error);
+      toast({
+        title: "Import Failed",
+        description: "Failed to read the Excel file. Please check the format and try again.",
+        variant: "destructive",
+      });
+    }
+
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleAddClient = (newClient: {
@@ -120,6 +209,21 @@ const ClientsView = () => {
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-semibold text-gray-900">Client Management</CardTitle>
             <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={importFromExcel}
+                className="hidden"
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Import from Excel
+              </Button>
               <Button
                 onClick={exportToExcel}
                 variant="outline"
