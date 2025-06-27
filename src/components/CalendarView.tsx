@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -164,9 +165,9 @@ const CalendarView = () => {
 
   if (loading) {
     return (
-      <Card className="bg-white">
-        <CardContent className="p-6">
-          <div className="text-center">Loading schedule...</div>
+      <Card className="bg-white shadow-sm">
+        <CardContent className="p-8">
+          <div className="text-center text-gray-500">Loading schedule...</div>
         </CardContent>
       </Card>
     );
@@ -176,18 +177,19 @@ const CalendarView = () => {
 
   return (
     <>
-      <Card className="bg-white">
-        <CardHeader>
+      <Card className="bg-white shadow-sm">
+        <CardHeader className="pb-6">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="text-2xl font-bold text-gray-900">
               Training Schedule
             </CardTitle>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
                 <Button
                   variant={viewMode === 'week' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('week')}
+                  className="min-w-[70px]"
                 >
                   Week
                 </Button>
@@ -195,19 +197,21 @@ const CalendarView = () => {
                   variant={viewMode === 'month' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('month')}
+                  className="min-w-[70px]"
                 >
                   Month
                 </Button>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => viewMode === 'week' ? navigateWeek('prev') : navigateMonth('prev')}
+                  className="h-9 w-9 p-0"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <span className="font-medium min-w-[200px] text-center">
+                <span className="font-semibold text-lg min-w-[220px] text-center text-gray-800">
                   {viewMode === 'week' 
                     ? `${format(weekStart, 'MMM d')} - ${format(endOfWeek(weekStart), 'MMM d, yyyy')}`
                     : format(currentDate, 'MMMM yyyy')
@@ -217,6 +221,7 @@ const CalendarView = () => {
                   variant="outline" 
                   size="sm" 
                   onClick={() => viewMode === 'week' ? navigateWeek('next') : navigateMonth('next')}
+                  className="h-9 w-9 p-0"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </Button>
@@ -225,117 +230,137 @@ const CalendarView = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           {viewMode === 'week' && (
-            <div className="grid grid-cols-8 gap-2">
-              {/* Time column header */}
-              <div className="font-medium text-sm text-gray-500 p-2">
-                <div>Eastern Standard Time</div>
-                <div>5:00 AM - 10:30 PM</div>
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="grid grid-cols-8 bg-gray-50">
+                {/* Time column header */}
+                <div className="p-4 border-r border-gray-200 bg-white">
+                  <div className="text-sm font-medium text-gray-700">Eastern Time</div>
+                  <div className="text-xs text-gray-500 mt-1">5:00 AM - 10:30 PM</div>
+                </div>
+                
+                {/* Day headers */}
+                {weekDays.map((day) => (
+                  <div key={day.toISOString()} className="p-4 text-center border-r border-gray-200 last:border-r-0">
+                    <div className="font-semibold text-gray-900">{format(day, 'EEE')}</div>
+                    <div className={`text-sm mt-1 w-6 h-6 mx-auto rounded-full flex items-center justify-center ${
+                      isSameDay(day, new Date()) 
+                        ? 'bg-blue-600 text-white font-bold' 
+                        : 'text-gray-600'
+                    }`}>
+                      {format(day, 'd')}
+                    </div>
+                  </div>
+                ))}
               </div>
               
-              {/* Day headers */}
-              {weekDays.map((day) => (
-                <div key={day.toISOString()} className="text-center p-2 border-b">
-                  <div className="font-medium">{format(day, 'EEE')}</div>
-                  <div className={`text-sm ${isSameDay(day, new Date()) ? 'text-blue-600 font-bold' : 'text-gray-500'}`}>
-                    {format(day, 'd')}
-                  </div>
-                </div>
-              ))}
-              
               {/* Time slots and sessions */}
-              {timeSlots.map((time) => (
-                <div key={time} className="contents">
-                  <div className="text-xs text-gray-500 p-2 border-r">{time}</div>
-                  {weekDays.map((day) => {
-                    const session = getSessionForTimeSlot(day, time);
-                    return (
-                      <div key={`${day.toISOString()}-${time}`} className="min-h-[50px] border-r border-b p-1">
-                        {session && (
-                          <div 
-                            className={`p-2 rounded-md text-xs cursor-pointer hover:shadow-md transition-shadow ${
-                              session.duration === 60 ? 'bg-blue-100 hover:bg-blue-200' : 'bg-green-100 hover:bg-green-200'
-                            }`}
-                            onClick={() => handleSessionClick(session)}
-                          >
-                            <div className="font-medium truncate">{session.client_name}</div>
-                            <div className="flex items-center gap-1 text-gray-600">
-                              <Clock className="w-3 h-3" />
-                              {session.duration}min
-                            </div>
-                            {session.location && session.location !== 'TBD' && (
-                              <div className="flex items-center gap-1 text-gray-600 mt-1">
-                                <MapPin className="w-3 h-3" />
-                                <span className="truncate text-xs">{session.location}</span>
-                              </div>
-                            )}
-                            <Badge 
-                              variant={session.status === 'confirmed' ? 'default' : 'secondary'}
-                              className="mt-1 text-xs"
+              <div className="bg-white">
+                {timeSlots.map((time) => (
+                  <div key={time} className="grid grid-cols-8 border-b border-gray-100 last:border-b-0">
+                    <div className="p-3 text-xs text-gray-500 border-r border-gray-100 bg-gray-50/50 font-medium">
+                      {time}
+                    </div>
+                    {weekDays.map((day) => {
+                      const session = getSessionForTimeSlot(day, time);
+                      return (
+                        <div key={`${day.toISOString()}-${time}`} className="min-h-[60px] border-r border-gray-100 last:border-r-0 p-2">
+                          {session && (
+                            <div 
+                              className={`p-3 rounded-lg text-xs cursor-pointer hover:shadow-md transition-all duration-200 h-full ${
+                                session.duration === 60 
+                                  ? 'bg-blue-50 hover:bg-blue-100 border border-blue-200' 
+                                  : 'bg-green-50 hover:bg-green-100 border border-green-200'
+                              }`}
+                              onClick={() => handleSessionClick(session)}
                             >
-                              {session.status}
-                            </Badge>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
+                              <div className="font-semibold text-gray-900 truncate mb-1">
+                                {session.client_name}
+                              </div>
+                              <div className="flex items-center gap-1 text-gray-600 mb-1">
+                                <Clock className="w-3 h-3" />
+                                <span className="text-xs">{session.duration}min</span>
+                              </div>
+                              {session.location && session.location !== 'TBD' && (
+                                <div className="flex items-center gap-1 text-gray-600 mb-2">
+                                  <MapPin className="w-3 h-3" />
+                                  <span className="truncate text-xs">{session.location}</span>
+                                </div>
+                              )}
+                              <Badge 
+                                variant={session.status === 'confirmed' ? 'default' : 'secondary'}
+                                className="text-xs px-2 py-0.5"
+                              >
+                                {session.status}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
           
           {viewMode === 'month' && (
-            <div className="grid grid-cols-7 gap-1">
-              {/* Day headers */}
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                <div key={day} className="p-2 text-center font-medium text-sm text-gray-600 border-b">
-                  {day}
-                </div>
-              ))}
-              
-              {/* Calendar days */}
-              {monthDays.map((day) => {
-                const daySessions = getSessionsForDay(day);
-                const isCurrentMonth = isSameMonth(day, currentDate);
-                const isToday = isSameDay(day, new Date());
-                
-                return (
-                  <div 
-                    key={day.toISOString()} 
-                    className={`min-h-[100px] p-2 border border-gray-100 ${
-                      !isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'
-                    } ${isToday ? 'bg-blue-50 border-blue-200' : ''}`}
-                  >
-                    <div className={`text-sm font-medium mb-1 ${isToday ? 'text-blue-600' : ''}`}>
-                      {format(day, 'd')}
-                    </div>
-                    <div className="space-y-1">
-                      {daySessions.map((session) => (
-                        <div
-                          key={session.id}
-                          className={`text-xs p-1 rounded cursor-pointer hover:shadow-sm transition-shadow ${
-                            session.duration === 60 ? 'bg-blue-100 hover:bg-blue-200' : 'bg-green-100 hover:bg-green-200'
-                          }`}
-                          onClick={() => handleSessionClick(session)}
-                        >
-                          <div className="font-medium truncate">{session.client_name}</div>
-                          <div className="text-gray-600">
-                            {session.time.substring(0, 5)} ({session.duration}min)
-                          </div>
-                          {session.location && session.location !== 'TBD' && (
-                            <div className="flex items-center gap-1 text-gray-600 mt-1">
-                              <MapPin className="w-2 h-2" />
-                              <span className="truncate text-xs">{session.location}</span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="grid grid-cols-7 bg-gray-50">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                  <div key={day} className="p-4 text-center font-semibold text-gray-700 border-r border-gray-200 last:border-r-0">
+                    {day}
                   </div>
-                );
-              })}
+                ))}
+              </div>
+              
+              <div className="grid grid-cols-7">
+                {monthDays.map((day) => {
+                  const daySessions = getSessionsForDay(day);
+                  const isCurrentMonth = isSameMonth(day, currentDate);
+                  const isToday = isSameDay(day, new Date());
+                  
+                  return (
+                    <div 
+                      key={day.toISOString()} 
+                      className={`min-h-[120px] p-3 border-r border-b border-gray-100 last:border-r-0 ${
+                        !isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'
+                      } ${isToday ? 'bg-blue-50 border-blue-200' : ''}`}
+                    >
+                      <div className={`text-sm font-semibold mb-2 ${isToday ? 'text-blue-600' : isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}`}>
+                        {format(day, 'd')}
+                      </div>
+                      <div className="space-y-1">
+                        {daySessions.map((session) => (
+                          <div
+                            key={session.id}
+                            className={`text-xs p-2 rounded-md cursor-pointer hover:shadow-sm transition-all duration-200 ${
+                              session.duration === 60 
+                                ? 'bg-blue-50 hover:bg-blue-100 border border-blue-200' 
+                                : 'bg-green-50 hover:bg-green-100 border border-green-200'
+                            }`}
+                            onClick={() => handleSessionClick(session)}
+                          >
+                            <div className="font-semibold truncate text-gray-900 mb-1">
+                              {session.client_name}
+                            </div>
+                            <div className="text-gray-600 mb-1">
+                              {session.time.substring(0, 5)} ({session.duration}min)
+                            </div>
+                            {session.location && session.location !== 'TBD' && (
+                              <div className="flex items-center gap-1 text-gray-600">
+                                <MapPin className="w-2 h-2" />
+                                <span className="truncate text-xs">{session.location}</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </CardContent>
