@@ -34,7 +34,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     email: client.email,
     phone: client.phone,
     package: client.package,
-    price: client.price || (client.package.includes('60min') ? 120 : 80),
+    price: client.price || (client.package.includes('60MIN Premium') ? 120 : 80),
     regularSlot: client.regular_slot,
     location: client.location || "",
     paymentType: client.payment_type || "Cash"
@@ -56,7 +56,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   }, [open, sessions, client.id]);
 
   const handlePackageChange = (packageType: string) => {
-    const defaultPrice = packageType === "30min Standard" ? 80 : 120;
+    const defaultPrice = packageType === "30MIN Standard" ? 80 : 120;
     setFormData({
       ...formData,
       package: packageType,
@@ -141,8 +141,8 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                   onChange={(e) => handlePackageChange(e.target.value)}
                   className="w-full h-10 px-3 py-2 border border-input bg-background rounded-md"
                 >
-                  <option value="30min Standard">30min Standard</option>
-                  <option value="60min Premium">60min Premium</option>
+                  <option value="30MIN Standard">30MIN Standard</option>
+                  <option value="60MIN Premium">60MIN Premium</option>
                 </select>
               </div>
               <div>
@@ -206,7 +206,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
             <div className="bg-gray-50 p-4 rounded-lg space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Package:</span>
-                <Badge variant={client.package.includes('60min') ? 'default' : 'secondary'}>
+                <Badge variant={client.package.includes('60MIN Premium') ? 'default' : 'secondary'}>
                   {client.package}
                 </Badge>
               </div>

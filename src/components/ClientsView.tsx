@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -131,7 +130,7 @@ const ClientsView = () => {
                     <div className="flex items-start gap-2">
                       <div className="text-right space-y-2">
                         <Badge 
-                          variant={client.package.includes('60min') ? 'default' : 'secondary'}
+                          variant={client.package.includes('60MIN Premium') ? 'default' : 'secondary'}
                           className="mb-2"
                         >
                           <Package className="w-3 h-3 mr-1" />

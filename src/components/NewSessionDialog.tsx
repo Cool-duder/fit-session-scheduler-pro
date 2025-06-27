@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,7 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
     date: "",
     time: "",
     duration: 60,
-    package: "60min Premium",
+    package: "60MIN Premium",
     location: ""
   });
 
@@ -73,7 +72,7 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
         client_id: clientId,
         client_name: selectedClient.name,
         package: selectedClient.package,
-        duration: selectedClient.package.includes('60min') ? 60 : 30,
+        duration: selectedClient.package.includes('60MIN Premium') ? 60 : 30,
         location: selectedClient.location || ""
       });
     }
@@ -117,7 +116,7 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
       date: "",
       time: "",
       duration: 60,
-      package: "60min Premium",
+      package: "60MIN Premium",
       location: ""
     });
     setOpen(false);

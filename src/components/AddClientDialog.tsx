@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ interface AddClientDialogProps {
     price: number;
     regularSlot: string;
     location: string;
+    paymentType: string;
   }) => void;
 }
 
@@ -23,20 +23,21 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
   const [open, setOpen] = useState(false);
   const [editingPrices, setEditingPrices] = useState(false);
   const [packageOptions, setPackageOptions] = useState([
-    { value: "5x 30MIN", label: "5x 30MIN", price: 400, sessions: 5 },
-    { value: "10x 30MIN", label: "10x 30MIN", price: 800, sessions: 10 },
-    { value: "5x 60MIN", label: "5x 60MIN", price: 600, sessions: 5 },
-    { value: "10x 60MIN", label: "10x 60MIN", price: 1200, sessions: 10 }
+    { value: "5x 30MIN Standard", label: "5x 30MIN Standard", price: 400, sessions: 5 },
+    { value: "10x 30MIN Standard", label: "10x 30MIN Standard", price: 800, sessions: 10 },
+    { value: "5x 60MIN Premium", label: "5x 60MIN Premium", price: 600, sessions: 5 },
+    { value: "10x 60MIN Premium", label: "10x 60MIN Premium", price: 1200, sessions: 10 }
   ]);
   
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
-    package: "10x 60MIN",
+    package: "10x 60MIN Premium",
     price: 1200,
     regularSlot: "",
-    location: ""
+    location: "",
+    paymentType: "Cash"
   });
 
   const handlePackageChange = (packageValue: string) => {
@@ -71,16 +72,18 @@ const AddClientDialog = ({ onAddClient }: AddClientDialogProps) => {
       onAddClient({
         ...formData,
         regularSlot: formData.regularSlot,
-        location: formData.location
+        location: formData.location,
+        paymentType: formData.paymentType
       });
       setFormData({
         name: "",
         email: "",
         phone: "",
-        package: "10x 60MIN",
-        price: packageOptions.find(pkg => pkg.value === "10x 60MIN")?.price || 1200,
+        package: "10x 60MIN Premium",
+        price: packageOptions.find(pkg => pkg.value === "10x 60MIN Premium")?.price || 1200,
         regularSlot: "",
-        location: ""
+        location: "",
+        paymentType: "Cash"
       });
       setOpen(false);
     }
