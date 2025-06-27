@@ -19,6 +19,7 @@ export type Database = {
           monthly_count: number
           name: string
           package: string
+          payment_type: string | null
           phone: string
           price: number | null
           regular_slot: string | null
@@ -34,6 +35,7 @@ export type Database = {
           monthly_count?: number
           name: string
           package: string
+          payment_type?: string | null
           phone: string
           price?: number | null
           regular_slot?: string | null
@@ -49,6 +51,7 @@ export type Database = {
           monthly_count?: number
           name?: string
           package?: string
+          payment_type?: string | null
           phone?: string
           price?: number | null
           regular_slot?: string | null
@@ -56,6 +59,60 @@ export type Database = {
           total_sessions?: number
         }
         Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          client_id: string
+          client_name: string
+          created_at: string
+          id: string
+          notes: string | null
+          payment_date: string | null
+          payment_status: string
+          payment_type: string
+          session_id: string | null
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          client_name: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_status?: string
+          payment_type: string
+          session_id?: string | null
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          client_name?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_status?: string
+          payment_type?: string
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sessions: {
         Row: {
@@ -67,6 +124,8 @@ export type Database = {
           id: string
           location: string | null
           package: string
+          payment_status: string | null
+          payment_type: string | null
           status: string
           time: string
         }
@@ -79,6 +138,8 @@ export type Database = {
           id?: string
           location?: string | null
           package: string
+          payment_status?: string | null
+          payment_type?: string | null
           status?: string
           time: string
         }
@@ -91,6 +152,8 @@ export type Database = {
           id?: string
           location?: string | null
           package?: string
+          payment_status?: string | null
+          payment_type?: string | null
           status?: string
           time?: string
         }

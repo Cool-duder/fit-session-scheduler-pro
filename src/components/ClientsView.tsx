@@ -16,9 +16,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Search, Phone, Mail, Calendar, Package, Trash2 } from "lucide-react";
+import { Search, Phone, Mail, Calendar, Package, Trash2, DollarSign } from "lucide-react";
 import AddClientDialog from "./AddClientDialog";
 import EditClientDialog from "./EditClientDialog";
+import PaymentStatusBadge from "./PaymentStatusBadge";
 import { useClients } from "@/hooks/useClients";
 
 const ClientsView = () => {
@@ -33,6 +34,7 @@ const ClientsView = () => {
     price: number;
     regularSlot: string;
     location: string;
+    paymentType: string;
   }) => {
     addClient(newClient);
   };
@@ -45,6 +47,7 @@ const ClientsView = () => {
     price: number;
     regularSlot: string;
     location: string;
+    paymentType: string;
   }) => {
     editClient(clientId, updatedData);
   };
@@ -116,6 +119,12 @@ const ClientsView = () => {
                           <Calendar className="w-4 h-4" />
                           Regular slot: {client.regular_slot}
                         </div>
+                        <div className="flex items-center gap-2">
+                          <PaymentStatusBadge 
+                            status="completed" 
+                            paymentType={client.payment_type || 'Cash'} 
+                          />
+                        </div>
                       </div>
                     </div>
                     
@@ -136,6 +145,10 @@ const ClientsView = () => {
                           <div className="flex justify-between gap-4">
                             <span className="text-gray-600">This month:</span>
                             <span className="font-medium text-blue-600">{client.monthly_count}</span>
+                          </div>
+                          <div className="flex justify-between gap-4">
+                            <span className="text-gray-600">Package price:</span>
+                            <span className="font-medium text-green-600">${client.price || 120}</span>
                           </div>
                         </div>
                         

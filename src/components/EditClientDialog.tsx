@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Edit, Calendar, Clock, MapPin } from "lucide-react";
+import { Edit, Calendar, Clock, MapPin, DollarSign } from "lucide-react";
 import { Client } from "@/hooks/useClients";
 import { useSessions, Session } from "@/hooks/useSessions";
 import { format } from "date-fns";
+import PaymentTypeSelect from "./PaymentTypeSelect";
+import PaymentStatusBadge from "./PaymentStatusBadge";
 
 interface EditClientDialogProps {
   client: Client;
@@ -22,6 +23,7 @@ interface EditClientDialogProps {
     price: number;
     regularSlot: string;
     location: string;
+    paymentType: string;
   }) => void;
 }
 
@@ -34,7 +36,8 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     package: client.package,
     price: client.price || (client.package.includes('60min') ? 120 : 80),
     regularSlot: client.regular_slot,
-    location: client.location || ""
+    location: client.location || "",
+    paymentType: client.payment_type || "Cash"
   });
   
   const { sessions } = useSessions();
@@ -67,7 +70,8 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
       onEditClient(client.id, {
         ...formData,
         regularSlot: formData.regularSlot,
-        location: formData.location
+        location: formData.location,
+        paymentType: formData.paymentType
       });
       setOpen(false);
     }
@@ -154,6 +158,11 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                   required
                 />
               </div>
+              <PaymentTypeSelect
+                value={formData.paymentType}
+                onChange={(value) => setFormData({...formData, paymentType: value})}
+                label="Preferred Payment Method"
+              />
               <div>
                 <Label htmlFor="edit-regularSlot">Regular Time Slot</Label>
                 <Input
@@ -200,6 +209,10 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                 <Badge variant={client.package.includes('60min') ? 'default' : 'secondary'}>
                   {client.package}
                 </Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Preferred Payment:</span>
+                <PaymentStatusBadge status="completed" paymentType={client.payment_type || 'Cash'} />
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Sessions Remaining:</span>
@@ -253,6 +266,12 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                             >
                               {session.status}
                             </Badge>
+                            {session.payment_status && (
+                              <PaymentStatusBadge 
+                                status={session.payment_status as 'pending' | 'completed' | 'failed'} 
+                                paymentType={session.payment_type}
+                              />
+                            )}
                           </div>
                           <div className="text-xs text-gray-500">
                             {format(new Date(session.date), 'MMM d, yyyy')}
