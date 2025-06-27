@@ -1,90 +1,369 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Users, Plus, TrendingUp } from "lucide-react";
-import DashboardStats from "./DashboardStats";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { 
+  Users, 
+  Calendar, 
+  DollarSign, 
+  TrendingUp, 
+  Clock,
+  MapPin,
+  Mail,
+  Phone,
+  Package,
+  Gift,
+  Cake
+} from "lucide-react";
+import { useClients } from "@/hooks/useClients";
+import { useSessions } from "@/hooks/useSessions";
+import { usePayments } from "@/hooks/usePayments";
+import { format, isToday, isTomorrow, parseISO } from "date-fns";
+import AddClientDialog from "./AddClientDialog";
+import BirthdayEmailDialog from "./BirthdayEmailDialog";
 
 interface DashboardOverviewProps {
   onNavigate: (tab: string) => void;
 }
 
 const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
+  const { clients, loading: clientsLoading, addClient } = useClients();
+  const { sessions, loading: sessionsLoading } = useSessions();
+  const { payments, loading: paymentsLoading } = usePayments();
+
+  const handleAddClient = (newClient: {
+    name: string;
+    email: string;
+    phone: string;
+    package: string;
+    price: number;
+    regularSlot: string;
+    location: string;
+    paymentType: string;
+    birthday?: string;
+  }) => {
+    addClient(newClient);
+  };
+
+  const getBirthdayStatus = (birthday?: string) => {
+    if (!birthday) return null;
+    
+    try {
+      const birthDate = parseISO(birthday);
+      const today = new Date();
+      const thisYearBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+      
+      if (isToday(thisYearBirthday)) {
+        return { status: 'today', text: 'Today!', color: 'bg-pink-500' };
+      } else if (isTomorrow(thisYearBirthday)) {
+        return { status: 'tomorrow', text: 'Tomorrow', color: 'bg-orange-500' };
+      }
+      
+      // Check if birthday is within next 7 days
+      const daysUntil = Math.ceil((thisYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysUntil > 0 && daysUntil <= 7) {
+        return { status: 'soon', text: `In ${daysUntil} days`, color: 'bg-blue-500' };
+      }
+      
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  // Get today's sessions
+  const todaySessions = sessions.filter(session => {
+    const sessionDate = new Date(session.date);
+    const today = new Date();
+    return sessionDate.toDateString() === today.toDateString();
+  });
+
+  // Calculate total revenue
+  const totalRevenue = payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
+
+  // Get clients with upcoming birthdays
+  const clientsWithUpcomingBirthdays = clients
+    .filter(client => {
+      const birthdayStatus = getBirthdayStatus(client.birthday);
+      return birthdayStatus !== null;
+    })
+    .sort((a, b) => {
+      const statusA = getBirthdayStatus(a.birthday);
+      const statusB = getBirthdayStatus(b.birthday);
+      
+      // Sort by priority: today, tomorrow, then by days until birthday
+      if (statusA?.status === 'today') return -1;
+      if (statusB?.status === 'today') return 1;
+      if (statusA?.status === 'tomorrow') return -1;
+      if (statusB?.status === 'tomorrow') return 1;
+      
+      return 0;
+    });
+
   return (
-    <div className="space-y-8">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-white">
-        <h1 className="text-3xl font-bold mb-2">Welcome back!</h1>
-        <p className="text-blue-100 mb-6">Here's what's happening with your training business today.</p>
-        <div className="flex gap-4">
-          <Button 
-            variant="secondary" 
-            className="bg-white text-blue-600 hover:bg-blue-50"
-            onClick={() => onNavigate('calendar')}
-          >
-            <Calendar className="w-4 h-4 mr-2" />
-            View Schedule
-          </Button>
-          <Button 
-            variant="secondary" 
-            className="bg-white text-purple-600 hover:bg-purple-50 border-white"
-            onClick={() => onNavigate('clients')}
-          >
-            <Users className="w-4 h-4 mr-2" />
-            Manage Clients
-          </Button>
-        </div>
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="bg-white">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Clients</p>
+                <p className="text-2xl font-bold text-gray-900">{clients.length}</p>
+              </div>
+              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Users className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Today's Sessions</p>
+                <p className="text-2xl font-bold text-gray-900">{todaySessions.length}</p>
+              </div>
+              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                <p className="text-2xl font-bold text-gray-900">${totalRevenue.toFixed(2)}</p>
+              </div>
+              <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Sessions</p>
+                <p className="text-2xl font-bold text-gray-900">{sessions.length}</p>
+              </div>
+              <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-orange-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Stats */}
-      <DashboardStats />
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigate('calendar')}>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Calendar className="w-5 h-5 text-blue-600" />
-              Today's Schedule
+      {/* Upcoming Birthdays Alert */}
+      {clientsWithUpcomingBirthdays.length > 0 && (
+        <Card className="bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-pink-700">
+              <Cake className="w-5 h-5" />
+              Upcoming Birthdays 🎉
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600 mb-4">View and manage today's training sessions</p>
-            <Button size="sm" className="w-full">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Session
-            </Button>
+            <div className="space-y-2">
+              {clientsWithUpcomingBirthdays.slice(0, 3).map((client) => {
+                const birthdayStatus = getBirthdayStatus(client.birthday);
+                return (
+                  <div key={client.id} className="flex items-center justify-between bg-white p-3 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="text-sm">
+                          {client.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{client.name}</p>
+                        <p className="text-sm text-gray-600">
+                          {format(parseISO(client.birthday!), 'MMM dd')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {birthdayStatus && (
+                        <Badge className={`${birthdayStatus.color} text-white`}>
+                          {birthdayStatus.text}
+                        </Badge>
+                      )}
+                      <BirthdayEmailDialog 
+                        client={client} 
+                        trigger={
+                          <Button size="sm" className="bg-pink-500 hover:bg-pink-600">
+                            <Gift className="w-3 h-3 mr-1" />
+                            Send Wishes
+                          </Button>
+                        }
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Client Information */}
+        <Card className="bg-white">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Client Information</CardTitle>
+              <AddClientDialog onAddClient={handleAddClient} />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {clientsLoading ? (
+                <div className="text-center py-4">Loading clients...</div>
+              ) : clients.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Users className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <p>No clients added yet</p>
+                  <p className="text-sm">Add your first client to get started</p>
+                </div>
+              ) : (
+                clients.slice(0, 5).map((client) => {
+                  const birthdayStatus = getBirthdayStatus(client.birthday);
+                  return (
+                    <div key={client.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback>
+                            {client.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium">{client.name}</h3>
+                            {birthdayStatus && (
+                              <Badge className={`${birthdayStatus.color} text-white text-xs`}>
+                                <Cake className="w-2 h-2 mr-1" />
+                                {birthdayStatus.text}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                            <div className="flex items-center gap-1">
+                              <Mail className="w-3 h-3" />
+                              {client.email}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Phone className="w-3 h-3" />
+                              {client.phone}
+                            </div>
+                          </div>
+                          {client.birthday && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Gift className="w-3 h-3" />
+                              Birthday: {format(parseISO(client.birthday), 'MMM dd')}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="secondary" className="mb-1">
+                          <Package className="w-3 h-3 mr-1" />
+                          {client.package}
+                        </Badge>
+                        <p className="text-sm text-gray-600">{client.sessions_left} sessions left</p>
+                        {client.birthday && (
+                          <BirthdayEmailDialog 
+                            client={client} 
+                            trigger={
+                              <Button size="sm" className="bg-pink-500 hover:bg-pink-600 text-xs mt-1">
+                                <Gift className="w-3 h-3 mr-1" />
+                                Birthday
+                              </Button>
+                            }
+                          />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              
+              {clients.length > 5 && (
+                <div className="text-center">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => onNavigate('clients')}
+                    className="w-full"
+                  >
+                    View All Clients ({clients.length})
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigate('clients')}>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Users className="w-5 h-5 text-green-600" />
-              Client Management
-            </CardTitle>
+        {/* Today's Schedule */}
+        <Card className="bg-white">
+          <CardHeader>
+            <CardTitle>Today's Schedule</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600 mb-4">Add new clients and track progress</p>
-            <Button size="sm" variant="outline" className="w-full">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Client
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigate('analytics')}>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <TrendingUp className="w-5 h-5 text-orange-600" />
-              Performance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 mb-4">Track your business metrics and growth</p>
-            <Button size="sm" variant="outline" className="w-full">
-              View Analytics
-            </Button>
+            <div className="space-y-4">
+              {sessionsLoading ? (
+                <div className="text-center py-4">Loading sessions...</div>
+              ) : todaySessions.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Clock className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <p>No sessions scheduled for today</p>
+                </div>
+              ) : (
+                todaySessions.map((session) => (
+                  <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback>
+                          {session.client_name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-medium">{session.client_name}</h3>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Clock className="w-4 h-4" />
+                          {session.time}
+                          <MapPin className="w-4 h-4 ml-2" />
+                          {session.location}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline">{session.duration} min</Badge>
+                      <p className="text-sm text-gray-600 mt-1">{session.package}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+              
+              {todaySessions.length > 0 && (
+                <div className="text-center">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => onNavigate('calendar')}
+                    className="w-full"
+                  >
+                    View Full Calendar
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
