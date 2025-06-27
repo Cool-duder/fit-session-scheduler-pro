@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@ import { usePackages } from "@/hooks/usePackages";
 import { format } from "date-fns";
 import PaymentTypeSelect from "./PaymentTypeSelect";
 import PaymentStatusBadge from "./PaymentStatusBadge";
+import PackageManagementDialog from "./PackageManagementDialog";
 
 interface EditClientDialogProps {
   client: Client;
@@ -140,7 +140,10 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                 />
               </div>
               <div>
-                <Label htmlFor="edit-package">Package</Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="edit-package">Package</Label>
+                  <PackageManagementDialog />
+                </div>
                 <Select value={formData.package} onValueChange={handlePackageChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a package" />
