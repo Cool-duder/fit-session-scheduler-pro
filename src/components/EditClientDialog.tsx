@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,6 @@ import { usePackages } from "@/hooks/usePackages";
 import { format } from "date-fns";
 import PaymentTypeSelect from "./PaymentTypeSelect";
 import PaymentStatusBadge from "./PaymentStatusBadge";
-import PackageManagementDialog from "./PackageManagementDialog";
 
 interface EditClientDialogProps {
   client: Client;
@@ -51,9 +51,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
 
   useEffect(() => {
     if (open) {
-      // Filter sessions for this specific client
       const filteredSessions = sessions.filter(session => session.client_id === client.id);
-      // Sort by date (most recent first)
       const sortedSessions = filteredSessions.sort((a, b) => 
         new Date(b.date).getTime() - new Date(a.date).getTime()
       );
@@ -64,11 +62,11 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   const handlePackageChange = (packageName: string) => {
     const selectedPackage = packages.find(pkg => pkg.name === packageName);
     if (selectedPackage) {
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         package: packageName,
         price: selectedPackage.price
-      });
+      }));
     }
   };
 
@@ -89,6 +87,8 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   const completedSessions = clientSessions.filter(session => 
     session.status === 'completed' || new Date(session.date) < new Date()
   ).length;
+
+  const selectedPackage = packages.find(pkg => pkg.name === formData.package);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -151,28 +151,49 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                   onChange={(e) => setFormData({...formData, birthday: e.target.value})}
                   placeholder="Select birthday"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Optional: Add birthday for special occasion reminders
-                </p>
               </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label htmlFor="edit-package">Package</Label>
-                  <PackageManagementDialog />
+              
+              {/* Simplified Package Selection */}
+              <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+                <h4 className="font-medium text-blue-900">Package & Pricing</h4>
+                <div>
+                  <Label htmlFor="edit-package">Select Package</Label>
+                  <Select value={formData.package} onValueChange={handlePackageChange}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select a package" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {packages.map((pkg) => (
+                        <SelectItem key={pkg.id} value={pkg.name}>
+                          <div className="flex justify-between items-center w-full">
+                            <span>{pkg.name}</span>
+                            <span className="ml-4 font-semibold text-green-600">${pkg.price}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Select value={formData.package} onValueChange={handlePackageChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a package" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {packages.map((pkg) => (
-                      <SelectItem key={pkg.id} value={pkg.name}>
-                        {pkg.name} - ${pkg.price}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                
+                {/* Live Preview of Selected Package */}
+                {selectedPackage && (
+                  <div className="bg-white p-3 rounded border border-blue-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <Badge variant={formData.package.includes('60MIN') ? 'default' : 'secondary'}>
+                        {formData.package}
+                      </Badge>
+                      <div className="flex items-center gap-1 text-green-600 font-bold">
+                        <DollarSign className="w-4 h-4" />
+                        <span>${formData.price}</span>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {selectedPackage.sessions} sessions × {selectedPackage.duration} minutes
+                    </div>
+                  </div>
+                )}
               </div>
+
               <PaymentTypeSelect
                 value={formData.paymentType}
                 onChange={(value) => setFormData({...formData, paymentType: value})}
@@ -186,9 +207,6 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                   onChange={(e) => setFormData({...formData, regularSlot: e.target.value})}
                   placeholder="e.g., Monday 09:00, Wed 10:30, Friday 2:00 PM"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Enter day and time (e.g., "Monday 09:00" or "Mon, Wed, Fri 9:00 AM")
-                </p>
               </div>
               <div>
                 <Label htmlFor="edit-location">Training Location</Label>
@@ -198,9 +216,6 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                   onChange={(e) => setFormData({...formData, location: e.target.value})}
                   placeholder="e.g., Main Gym, Home Studio, Park"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Enter the location where training sessions will take place
-                </p>
               </div>
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>
@@ -213,29 +228,12 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
             </form>
           </div>
 
-          {/* Package & Session Information */}
+          {/* Session Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Package Information</h3>
+            <h3 className="text-lg font-semibold">Session Overview</h3>
             
-            {/* Package Stats - Now using formData instead of client data */}
+            {/* Session Stats */}
             <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Package:</span>
-                <Badge variant={formData.package.includes('60MIN') ? 'default' : 'secondary'}>
-                  {formData.package}
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Package Price:</span>
-                <div className="flex items-center gap-1 text-green-600 font-medium">
-                  <DollarSign className="w-3 h-3" />
-                  <span>{formData.price}</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Preferred Payment:</span>
-                <PaymentStatusBadge status="completed" paymentType={formData.paymentType} />
-              </div>
               {formData.birthday && (
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Birthday:</span>
@@ -246,16 +244,16 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                 </div>
               )}
               <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Payment Method:</span>
+                <PaymentStatusBadge status="completed" paymentType={formData.paymentType} />
+              </div>
+              <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Sessions Remaining:</span>
                 <span className="font-bold text-green-600">{client.sessions_left}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Total Sessions:</span>
                 <span className="font-medium">{client.total_sessions}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Sessions Used:</span>
-                <span className="font-medium text-blue-600">{client.total_sessions - client.sessions_left}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Completed Sessions:</span>
@@ -282,15 +280,14 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
 
             {/* Session History */}
             <div>
-              <h4 className="font-semibold mb-3">Session History ({clientSessions.length} sessions)</h4>
+              <h4 className="font-semibold mb-3">Recent Sessions ({clientSessions.length} total)</h4>
               <ScrollArea className="h-64 w-full border rounded-md p-3">
                 {clientSessions.length > 0 ? (
                   <div className="space-y-3">
-                    {clientSessions.map((session, index) => (
+                    {clientSessions.slice(0, 8).map((session, index) => (
                       <div key={session.id} className="bg-white border rounded-lg p-3 shadow-sm">
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">#{client.total_sessions - client.sessions_left - index}</span>
                             <Badge 
                               variant={session.status === 'confirmed' ? 'default' : 'secondary'}
                               className="text-xs"
@@ -305,21 +302,17 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                             )}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {format(new Date(session.date), 'MMM d, yyyy')}
+                            {format(new Date(session.date), 'MMM d')}
                           </div>
                         </div>
                         
-                        <div className="space-y-1 text-sm text-gray-600">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-3 h-3" />
-                            <span>{format(new Date(session.date), 'EEEE')}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            <span>{session.time.substring(0, 5)} ({session.duration}min)</span>
+                            <span>{session.time.substring(0, 5)}</span>
                           </div>
                           {session.location && session.location !== 'TBD' && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                               <MapPin className="w-3 h-3" />
                               <span>{session.location}</span>
                             </div>
@@ -330,8 +323,8 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                   </div>
                 ) : (
                   <div className="text-center text-gray-500 py-8">
-                    <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No sessions scheduled yet</p>
+                    <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No sessions yet</p>
                   </div>
                 )}
               </ScrollArea>
