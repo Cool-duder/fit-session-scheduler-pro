@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,15 @@ const MessagingCenter = () => {
   const { clients } = useClients();
   const { toast } = useToast();
 
+  // Helper function to convert 24-hour time to 12-hour format
+  const convertTo12Hour = (time24: string) => {
+    const [hours, minutes] = time24.split(':');
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12; // Convert 0 to 12 for midnight
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
   // Get today's and tomorrow's dates
   const today = new Date();
   const tomorrow = addDays(new Date(), 1);
@@ -38,6 +48,7 @@ const MessagingCenter = () => {
       id: parseInt(session.id.slice(0, 8), 16), // Convert UUID to number for UI
       clientName: session.client_name,
       time: session.time.substring(0, 5), // Remove seconds
+      time12Hour: convertTo12Hour(session.time.substring(0, 5)), // Convert to 12-hour format
       duration: session.duration,
       email: getClientEmail(session.client_id), // Use real email from clients table
       sent: Math.random() > 0.7, // Randomly mark some as sent for demo
@@ -52,6 +63,7 @@ const MessagingCenter = () => {
       id: parseInt(session.id.slice(0, 8), 16) + 1000, // Offset to avoid ID conflicts
       clientName: session.client_name,
       time: session.time.substring(0, 5), // Remove seconds
+      time12Hour: convertTo12Hour(session.time.substring(0, 5)), // Convert to 12-hour format
       duration: session.duration,
       email: getClientEmail(session.client_id), // Use real email from clients table
       sent: Math.random() > 0.7, // Randomly mark some as sent for demo
@@ -94,12 +106,12 @@ const MessagingCenter = () => {
       .replace('{messageType}', messageType)
       .replace('{sessionDate}', sessionDate)
       .replace('{duration}', session.duration.toString())
-      .replace('{time}', session.time);
+      .replace('{time}', session.time12Hour); // Use 12-hour format
   };
 
   const generateSubject = (session: any) => {
     const sessionDate = session.sessionType === 'today' ? 'Today' : 'Tomorrow';
-    return `Training Session Reminder - ${sessionDate} at ${session.time}`;
+    return `Training Session Reminder - ${sessionDate} at ${session.time12Hour}`; // Use 12-hour format
   };
 
   const handleSendEmails = () => {
@@ -135,6 +147,7 @@ const MessagingCenter = () => {
 
   return (
     <div className="space-y-6">
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="bg-white">
           <CardHeader className="pb-2">
@@ -254,7 +267,7 @@ const MessagingCenter = () => {
                               <div className="font-medium">{session.clientName}</div>
                               <div className="text-sm text-gray-600 flex items-center gap-2">
                                 <Clock className="w-4 h-4" />
-                                {session.time} ({session.duration} min) - Today
+                                {session.time12Hour} ({session.duration} min) - Today
                               </div>
                               <div className="text-xs text-gray-500 flex items-center gap-1">
                                 <Mail className="w-3 h-3" />
@@ -304,7 +317,7 @@ const MessagingCenter = () => {
                               <div className="font-medium">{session.clientName}</div>
                               <div className="text-sm text-gray-600 flex items-center gap-2">
                                 <Clock className="w-4 h-4" />
-                                {session.time} ({session.duration} min) - Tomorrow
+                                {session.time12Hour} ({session.duration} min) - Tomorrow
                               </div>
                               <div className="text-xs text-gray-500 flex items-center gap-1">
                                 <Mail className="w-3 h-3" />
