@@ -47,13 +47,10 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
     addClient(newClient);
   };
 
-  // Get today's sessions with proper date comparison
+  // Get today's sessions
   const todaySessions = sessions.filter(session => {
-    // Normalize both dates to ensure proper comparison
     const sessionDate = new Date(session.date);
     const today = new Date();
-    
-    // Use isSameDay from date-fns for accurate comparison
     return isSameDay(sessionDate, today);
   });
 
@@ -74,35 +71,24 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
 
   // Calculate total revenue from both payments and client packages
   const totalRevenue = React.useMemo(() => {
-    console.log('=== TOTAL REVENUE CALCULATION ===');
-    
-    // Revenue from recorded payments
     const paymentsRevenue = payments.reduce((sum, payment) => {
       const amount = Number(payment.amount) || 0;
-      console.log(`Payment ID: ${payment.id}, Amount: ${payment.amount}, Parsed: ${amount}`);
       return sum + amount;
     }, 0);
-    console.log('Total from payments:', paymentsRevenue);
     
-    // Revenue from client packages (price field)
     const packageRevenue = clients.reduce((sum, client) => {
       const amount = Number(client.price) || 0;
-      console.log(`Client: ${client.name}, Package: ${client.package}, Price: ${client.price}, Parsed: ${amount}`);
       return sum + amount;
     }, 0);
-    console.log('Total from client packages:', packageRevenue);
     
-    const totalRevenue = paymentsRevenue + packageRevenue;
-    console.log('TOTAL COMBINED REVENUE:', totalRevenue);
-    console.log('=== END CALCULATION ===');
-    
-    return totalRevenue;
+    return paymentsRevenue + packageRevenue;
   }, [payments, clients]);
 
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-5'}`}>
+        {/* Total Clients */}
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
             <div className="flex items-center justify-between">
@@ -117,6 +103,7 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
           </CardContent>
         </Card>
 
+        {/* Today's Sessions */}
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
             <div className="flex items-center justify-between">
@@ -131,6 +118,7 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
           </CardContent>
         </Card>
 
+        {/* Today's Revenue */}
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
             <div className="flex items-center justify-between">
@@ -147,6 +135,7 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
           </CardContent>
         </Card>
 
+        {/* Total Revenue */}
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
             <div className="flex items-center justify-between">
@@ -171,6 +160,7 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
           </CardContent>
         </Card>
 
+        {/* Active Sessions */}
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
             <div className="flex items-center justify-between">
@@ -186,6 +176,7 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
         </Card>
       </div>
 
+      {/* Client Information and Today's Schedule */}
       <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
         {/* Client Information */}
         <Card className="bg-white shadow-sm border">
@@ -212,7 +203,6 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
                 clients.slice(0, isMobile ? 3 : 4).map((client) => (
                   <div key={client.id} className={`bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ${isMobile ? 'p-3' : 'p-4'}`}>
                     <div className="flex items-start justify-between gap-4">
-                      {/* Left section - Avatar and name */}
                       <div className="flex items-center gap-3">
                         <Avatar className={`border-2 border-white shadow-sm flex-shrink-0 ${isMobile ? 'h-8 w-8' : 'h-10 w-10'}`}>
                           <AvatarFallback className={`bg-blue-100 text-blue-600 font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>
@@ -227,8 +217,6 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
                           </div>
                         </div>
                       </div>
-                      
-                      {/* Right section - Sessions left */}
                       <div className="text-right flex-shrink-0">
                         <div className={`font-medium text-blue-600 ${isMobile ? 'text-sm' : 'text-sm'}`}>
                           {client.sessions_left} left
@@ -236,7 +224,6 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
                       </div>
                     </div>
                     
-                    {/* Contact and additional info */}
                     <div className={`space-y-2 ${isMobile ? 'mt-2' : 'mt-3'}`}>
                       <div className={`grid grid-cols-1 gap-1 text-gray-600 ${isMobile ? 'text-xs' : 'text-xs'}`}>
                         <div className="flex items-center gap-2">
@@ -296,7 +283,6 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
                 todaySessions.map((session) => (
                   <div key={session.id} className={`bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ${isMobile ? 'p-3' : 'p-4'}`}>
                     <div className="flex items-start justify-between gap-4">
-                      {/* Left section - Avatar and client info */}
                       <div className="flex items-center gap-3">
                         <Avatar className={`border-2 border-white shadow-sm flex-shrink-0 ${isMobile ? 'h-8 w-8' : 'h-10 w-10'}`}>
                           <AvatarFallback className={`bg-green-100 text-green-600 font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>
@@ -310,8 +296,6 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
                           </div>
                         </div>
                       </div>
-                      
-                      {/* Right section - Duration badge */}
                       <div className="flex-shrink-0">
                         <Badge variant="outline" className={`px-2 py-0.5 ${isMobile ? 'text-xs' : 'text-xs'}`}>
                           {session.duration} min
@@ -319,7 +303,6 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
                       </div>
                     </div>
                     
-                    {/* Session details */}
                     <div className={`space-y-1 ${isMobile ? 'mt-2' : 'mt-3'}`}>
                       <div className={`grid grid-cols-1 gap-1 text-gray-600 ${isMobile ? 'text-xs' : 'text-xs'}`}>
                         <div className="flex items-center gap-2">
