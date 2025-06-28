@@ -1,12 +1,13 @@
 import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Download, Upload } from "lucide-react";
+import { Search, Download, Upload, Plus } from "lucide-react";
 import AddClientDialog from "./AddClientDialog";
 import BulkClientImport from "./BulkClientImport";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { format, parseISO } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ClientsViewHeaderProps {
   searchTerm: string;
@@ -25,6 +26,7 @@ const ClientsViewHeader = ({
 }: ClientsViewHeaderProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const exportToExcel = () => {
     const exportData = clients.map(client => ({
@@ -147,6 +149,61 @@ const ClientsViewHeader = ({
     }
   };
 
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        <BulkClientImport onAddClient={onAddClient} />
+        
+        {/* Mobile Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search clients..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {/* Mobile Action Buttons */}
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={importFromExcel}
+            className="hidden"
+          />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            variant="outline"
+            size="sm"
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Import
+          </Button>
+          <Button
+            onClick={exportToExcel}
+            variant="outline"
+            size="sm"
+            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+            disabled={clients.length === 0}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+        </div>
+        
+        {/* Mobile Add Client Button */}
+        <div className="flex justify-center">
+          <AddClientDialog onAddClient={onAddClient} />
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop version - keep existing code
   return (
     <div className="space-y-4">
       <BulkClientImport onAddClient={onAddClient} />

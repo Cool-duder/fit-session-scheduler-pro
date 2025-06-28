@@ -7,9 +7,11 @@ import ClientsView from "@/components/ClientsView";
 import MessagingCenter from "@/components/MessagingCenter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const isMobile = useIsMobile();
 
   const renderContent = () => {
     switch (activeTab) {
@@ -47,8 +49,14 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50 flex">
       <ModernSidebar activeTab={activeTab} onTabChange={setActiveTab} />
       
-      <div className="flex-1 flex flex-col">
-        <main className="flex-1 p-8 overflow-auto">
+      <div className={cn(
+        "flex-1 flex flex-col",
+        isMobile ? "pt-14" : ""
+      )}>
+        <main className={cn(
+          "flex-1 overflow-auto",
+          isMobile ? "p-4" : "p-8"
+        )}>
           {renderContent()}
         </main>
       </div>
