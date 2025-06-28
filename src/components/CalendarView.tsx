@@ -133,6 +133,7 @@ const CalendarView = () => {
       .filter(session => {
         const sessionDate = new Date(session.date);
         const sessionDateStr = format(sessionDate, 'yyyy-MM-dd');
+        console.log(`Comparing session date: ${sessionDateStr} with today: ${todayStr} for session:`, session);
         return sessionDateStr === todayStr;
       })
       .sort((a, b) => a.time.localeCompare(b.time));
@@ -140,6 +141,7 @@ const CalendarView = () => {
 
   const getSessionForTimeSlot = (date: Date, time: string) => {
     const targetDateStr = format(date, 'yyyy-MM-dd');
+    console.log(`Looking for session on ${targetDateStr} at ${time}`);
     
     // Convert display time (like "5:00 AM") back to 24-hour format for comparison
     const convertDisplayTimeTo24Hour = (displayTime: string) => {
@@ -158,10 +160,11 @@ const CalendarView = () => {
     };
 
     const targetTime24 = convertDisplayTimeTo24Hour(time);
+    console.log(`Converted ${time} to ${targetTime24}`);
     
     const session = sessions.find(session => {
       // Normalize session date - ensure consistent date format
-      const sessionDate = new Date(session.date);
+      const sessionDate = new Date(session.date + 'T00:00:00');
       const sessionDateStr = format(sessionDate, 'yyyy-MM-dd');
       
       // Convert database time format (HH:MM:SS) to comparison format (HH:MM)
@@ -170,23 +173,34 @@ const CalendarView = () => {
       const isDateMatch = sessionDateStr === targetDateStr;
       const isTimeMatch = sessionTime === targetTime24;
       
+      console.log(`Session ${session.id}: Date ${sessionDateStr} vs ${targetDateStr} (${isDateMatch}), Time ${sessionTime} vs ${targetTime24} (${isTimeMatch})`);
+      
       return isDateMatch && isTimeMatch;
     });
+    
+    if (session) {
+      console.log(`Found matching session:`, session);
+    }
     
     return session;
   };
 
   const getSessionsForDay = (date: Date) => {
     const targetDateStr = format(date, 'yyyy-MM-dd');
+    console.log(`Getting sessions for day: ${targetDateStr}`);
     
-    return sessions.filter(session => {
+    const daySessions = sessions.filter(session => {
       // Normalize session date - ensure consistent date format
-      const sessionDate = new Date(session.date);
+      const sessionDate = new Date(session.date + 'T00:00:00');
       const sessionDateStr = format(sessionDate, 'yyyy-MM-dd');
       
       const isMatch = sessionDateStr === targetDateStr;
+      console.log(`Session ${session.id}: ${sessionDateStr} vs ${targetDateStr} = ${isMatch}`);
       return isMatch;
     });
+    
+    console.log(`Found ${daySessions.length} sessions for ${targetDateStr}:`, daySessions);
+    return daySessions;
   };
 
   const exportToICalendar = () => {
