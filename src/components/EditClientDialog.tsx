@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -34,6 +33,7 @@ interface EditClientDialogProps {
 const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   const [open, setOpen] = useState(false);
   const { packages } = usePackages();
+  const [isCustomPrice, setIsCustomPrice] = useState(false);
   const [formData, setFormData] = useState({
     name: client.name,
     email: client.email,
@@ -56,17 +56,43 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
         new Date(b.date).getTime() - new Date(a.date).getTime()
       );
       setClientSessions(sortedSessions);
+      
+      // Check if current price matches any package price
+      const matchingPackage = packages.find(pkg => pkg.name === client.package);
+      setIsCustomPrice(matchingPackage ? matchingPackage.price !== client.price : true);
     }
-  }, [open, sessions, client.id]);
+  }, [open, sessions, client.id, packages, client.package, client.price]);
 
   const handlePackageChange = (packageName: string) => {
     const selectedPackage = packages.find(pkg => pkg.name === packageName);
-    if (selectedPackage) {
+    if (selectedPackage && !isCustomPrice) {
       setFormData(prev => ({
         ...prev,
         package: packageName,
         price: selectedPackage.price
       }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        package: packageName
+      }));
+    }
+  };
+
+  const handleCustomPriceToggle = () => {
+    setIsCustomPrice(!isCustomPrice);
+    if (!isCustomPrice) {
+      // When enabling custom price, keep current price
+      return;
+    } else {
+      // When disabling custom price, revert to package price
+      const selectedPackage = packages.find(pkg => pkg.name === formData.package);
+      if (selectedPackage) {
+        setFormData(prev => ({
+          ...prev,
+          price: selectedPackage.price
+        }));
+      }
     }
   };
 
@@ -153,9 +179,10 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                 />
               </div>
               
-              {/* Simplified Package Selection */}
-              <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+              {/* Enhanced Package & Pricing Section */}
+              <div className="bg-blue-50 p-4 rounded-lg space-y-4">
                 <h4 className="font-medium text-blue-900">Package & Pricing</h4>
+                
                 <div>
                   <Label htmlFor="edit-package">Select Package</Label>
                   <Select value={formData.package} onValueChange={handlePackageChange}>
@@ -174,6 +201,46 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Custom Price Option */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="custom-price"
+                    checked={isCustomPrice}
+                    onChange={handleCustomPriceToggle}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="custom-price" className="text-sm">
+                    Use custom price (override package price)
+                  </Label>
+                </div>
+
+                {/* Price Input */}
+                <div>
+                  <Label htmlFor="edit-price">
+                    {isCustomPrice ? "Custom Price" : "Package Price"}
+                  </Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      id="edit-price"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={formData.price}
+                      onChange={(e) => setFormData({...formData, price: parseInt(e.target.value) || 0})}
+                      className={`pl-10 ${!isCustomPrice ? 'bg-gray-100' : 'bg-white'}`}
+                      placeholder="Session price"
+                      disabled={!isCustomPrice}
+                    />
+                  </div>
+                  {!isCustomPrice && selectedPackage && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Using standard package price: ${selectedPackage.price}
+                    </p>
+                  )}
+                </div>
                 
                 {/* Live Preview of Selected Package */}
                 {selectedPackage && (
@@ -182,14 +249,26 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                       <Badge variant={formData.package.includes('60MIN') ? 'default' : 'secondary'}>
                         {formData.package}
                       </Badge>
-                      <div className="flex items-center gap-1 text-green-600 font-bold">
-                        <DollarSign className="w-4 h-4" />
-                        <span>${formData.price}</span>
+                      <div className="flex items-center gap-1">
+                        <div className={`flex items-center gap-1 font-bold ${isCustomPrice ? 'text-orange-600' : 'text-green-600'}`}>
+                          <DollarSign className="w-4 h-4" />
+                          <span>${formData.price}</span>
+                        </div>
+                        {isCustomPrice && (
+                          <Badge variant="outline" className="text-xs ml-2">
+                            Custom
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <div className="text-sm text-gray-600">
                       {selectedPackage.sessions} sessions × {selectedPackage.duration} minutes
                     </div>
+                    {isCustomPrice && (
+                      <div className="text-xs text-orange-600 mt-1">
+                        Standard price: ${selectedPackage.price} → Custom: ${formData.price}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
