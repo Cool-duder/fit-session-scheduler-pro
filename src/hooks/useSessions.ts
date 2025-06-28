@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
@@ -79,7 +80,7 @@ export const useSessions = () => {
       // First, get the current sessions_left for the client
       const { data: clientData, error: clientFetchError } = await supabase
         .from('clients')
-        .select('sessions_left')
+        .select('sessions_left, total_sessions')
         .eq('id', sessionData.client_id)
         .single()
 
@@ -102,7 +103,8 @@ export const useSessions = () => {
           duration: sessionData.duration,
           package: sessionData.package,
           status: sessionData.status || 'confirmed',
-          location: sessionData.location || 'TBD'
+          location: sessionData.location || 'TBD',
+          price: sessionData.price
         }])
         .select()
         .single()
@@ -116,7 +118,7 @@ export const useSessions = () => {
       const { error: updateError } = await supabase
         .from('clients')
         .update({ 
-          sessions_left: clientData.sessions_left - 1
+          sessions_left: Math.max(0, clientData.sessions_left - 1)
         })
         .eq('id', sessionData.client_id)
 
@@ -128,7 +130,7 @@ export const useSessions = () => {
       }
       
       console.log('Session added successfully:', data)
-      setSessions(prev => [...prev, data])
+      setSessions(prev => [...prev, data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()))
       toast({
         title: "Success",
         description: "Session scheduled successfully",
@@ -182,7 +184,7 @@ export const useSessions = () => {
       
       setSessions(prev => prev.map(session => 
         session.id === sessionId ? data : session
-      ))
+      ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()))
       
       toast({
         title: "Success",
@@ -208,7 +210,7 @@ export const useSessions = () => {
       // First, get the current sessions_left for the client
       const { data: clientData, error: clientFetchError } = await supabase
         .from('clients')
-        .select('sessions_left')
+        .select('sessions_left, total_sessions')
         .eq('id', clientId)
         .single()
 
@@ -224,11 +226,12 @@ export const useSessions = () => {
 
       if (error) throw error
       
-      // Add one session back to client's sessions_left
+      // Add one session back to client's sessions_left (but don't exceed total_sessions)
+      const newSessionsLeft = Math.min(clientData.total_sessions, clientData.sessions_left + 1);
       const { error: updateError } = await supabase
         .from('clients')
         .update({ 
-          sessions_left: clientData.sessions_left + 1
+          sessions_left: newSessionsLeft
         })
         .eq('id', clientId)
 

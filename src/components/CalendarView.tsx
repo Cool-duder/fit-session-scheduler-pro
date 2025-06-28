@@ -18,7 +18,7 @@ const CalendarView = () => {
   const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
   const [todayPopoverOpen, setTodayPopoverOpen] = useState(false);
   const { sessions, loading, addSession, updateSession, deleteSession, refetch } = useSessions();
-  const { clients } = useClients();
+  const { clients, refetch: refetchClients } = useClients();
 
   const handleAddSession = async (newSession: {
     client_id: string;
@@ -35,8 +35,8 @@ const CalendarView = () => {
       status: 'confirmed',
       location: newSession.location || 'TBD'
     });
-    // Refetch sessions to ensure calendar updates
-    await refetch();
+    // Refresh both sessions and clients to ensure counts are accurate
+    await Promise.all([refetch(), refetchClients()]);
   };
 
   const handleSessionClick = (session: Session) => {
@@ -46,12 +46,14 @@ const CalendarView = () => {
 
   const handleUpdateSession = async (sessionId: string, updates: Partial<Omit<Session, 'id'>>) => {
     await updateSession(sessionId, updates);
-    await refetch();
+    // Refresh both sessions and clients to ensure counts are accurate
+    await Promise.all([refetch(), refetchClients()]);
   };
 
   const handleDeleteSession = async (sessionId: string, clientId: string) => {
     await deleteSession(sessionId, clientId);
-    await refetch();
+    // Refresh both sessions and clients to ensure counts are accurate
+    await Promise.all([refetch(), refetchClients()]);
   };
 
   const formatTimeForDisplay = (hour: number, minute: number) => {
@@ -77,15 +79,14 @@ const CalendarView = () => {
     const client = clients.find(c => c.id === session.client_id);
     if (!client) return null;
     
-    const sessionsUsed = client.total_sessions - client.sessions_left;
-    // Find all sessions for this client up to and including the current session date
+    // Calculate sessions used by counting completed sessions up to this date
     const clientSessions = sessions
       .filter(s => s.client_id === session.client_id)
       .filter(s => new Date(s.date) <= new Date(session.date))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.time.localeCompare(b.time));
     
     const sessionIndex = clientSessions.findIndex(s => s.id === session.id);
-    const currentSessionNumber = sessionIndex >= 0 ? sessionIndex + 1 : sessionsUsed + 1;
+    const currentSessionNumber = sessionIndex >= 0 ? sessionIndex + 1 : clientSessions.length + 1;
     
     return {
       current: currentSessionNumber,
@@ -424,7 +425,7 @@ const CalendarView = () => {
                                   </div>
                                 )}
                                 {sessionCount && (
-                                  <div className="text-xs text-gray-600 mb-1">
+                                  <div className="text-xs text-gray-600 mb-1 font-medium">
                                     {sessionCount.current} of {sessionCount.total}
                                   </div>
                                 )}
@@ -500,7 +501,7 @@ const CalendarView = () => {
                                 </div>
                               )}
                               {sessionCount && (
-                                <div className="text-xs text-gray-600 mb-1">
+                                <div className="text-xs text-gray-600 mb-1 font-medium">
                                   {sessionCount.current} of {sessionCount.total}
                                 </div>
                               )}

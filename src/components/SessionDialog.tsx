@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Session } from "@/hooks/useSessions";
 import { usePackages } from "@/hooks/usePackages";
+import { useClients } from "@/hooks/useClients";
 import SessionDialogHeader from "./SessionDialogHeader";
 import SessionDialogFields from "./SessionDialogFields";
 import SessionDialogActions from "./SessionDialogActions";
@@ -20,6 +21,7 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const { packages } = usePackages();
+  const { clients, refetch: refetchClients } = useClients();
   const [formData, setFormData] = useState({
     date: "",
     time: "",
@@ -77,6 +79,9 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
       
       await onUpdate(session.id, updatedSessionData);
       
+      // Refresh client data to ensure session counts are accurate
+      await refetchClients();
+      
       setCurrentSession({
         ...session,
         ...updatedSessionData,
@@ -87,9 +92,11 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (session) {
-      onDelete(session.id, session.client_id);
+      await onDelete(session.id, session.client_id);
+      // Refresh client data to ensure session counts are accurate
+      await refetchClients();
       setShowDeleteAlert(false);
       onOpenChange(false);
     }
@@ -98,6 +105,22 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
   };
+
+  // Get session count for display
+  const getSessionCount = () => {
+    if (!session) return null;
+    
+    const client = clients.find(c => c.id === session.client_id);
+    if (!client) return null;
+    
+    const sessionsUsed = client.total_sessions - client.sessions_left;
+    return {
+      current: sessionsUsed,
+      total: client.total_sessions
+    };
+  };
+
+  const sessionCount = getSessionCount();
 
   if (!session || !currentSession) return null;
 
@@ -112,6 +135,14 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
               onDeleteClick={() => setShowDeleteAlert(true)}
             />
           </DialogHeader>
+          
+          {sessionCount && (
+            <div className="px-6 -mt-2 mb-4">
+              <div className="bg-blue-50 text-blue-700 px-3 py-2 rounded-md text-sm font-medium inline-block">
+                Session {sessionCount.current} of {sessionCount.total}
+              </div>
+            </div>
+          )}
           
           <SessionDialogFields
             currentSession={currentSession}
