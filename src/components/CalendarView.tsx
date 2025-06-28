@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChevronLeft, ChevronRight, Clock, MapPin, Download, ArrowLeft } from "lucide-react";
-import { format, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, subMonths, eachDayOfInterval, isSameMonth } from "date-fns";
+import { format, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, subMonths, eachDayOfInterval, isSameMonth, parseISO } from "date-fns";
 import NewSessionDialog from "./NewSessionDialog";
 import SessionDialog from "./SessionDialog";
 import { useSessions, Session } from "@/hooks/useSessions";
@@ -124,24 +124,23 @@ const CalendarView = () => {
     }
   };
 
-  // Get today's appointments
+  // Get today's appointments - Fixed date parsing
   const getTodaysAppointments = () => {
     const today = new Date();
-    const todayStr = format(today, 'yyyy-MM-dd');
+    console.log('Today date:', today);
     
     return sessions
       .filter(session => {
-        const sessionDate = new Date(session.date);
-        const sessionDateStr = format(sessionDate, 'yyyy-MM-dd');
-        console.log(`Comparing session date: ${sessionDateStr} with today: ${todayStr} for session:`, session);
-        return sessionDateStr === todayStr;
+        // Parse the session date properly
+        const sessionDate = parseISO(session.date);
+        console.log(`Comparing session date: ${session.date} (parsed: ${sessionDate}) with today: ${today} for session:`, session);
+        return isSameDay(sessionDate, today);
       })
       .sort((a, b) => a.time.localeCompare(b.time));
   };
 
   const getSessionForTimeSlot = (date: Date, time: string) => {
-    const targetDateStr = format(date, 'yyyy-MM-dd');
-    console.log(`Looking for session on ${targetDateStr} at ${time}`);
+    console.log(`Looking for session on ${format(date, 'yyyy-MM-dd')} at ${time}`);
     
     // Convert display time (like "5:00 AM") back to 24-hour format for comparison
     const convertDisplayTimeTo24Hour = (displayTime: string) => {
@@ -163,17 +162,16 @@ const CalendarView = () => {
     console.log(`Converted ${time} to ${targetTime24}`);
     
     const session = sessions.find(session => {
-      // Normalize session date - ensure consistent date format
-      const sessionDate = new Date(session.date + 'T00:00:00');
-      const sessionDateStr = format(sessionDate, 'yyyy-MM-dd');
+      // Parse the session date properly using parseISO
+      const sessionDate = parseISO(session.date);
       
       // Convert database time format (HH:MM:SS) to comparison format (HH:MM)
       const sessionTime = session.time.substring(0, 5); // Extract HH:MM from HH:MM:SS
       
-      const isDateMatch = sessionDateStr === targetDateStr;
+      const isDateMatch = isSameDay(sessionDate, date);
       const isTimeMatch = sessionTime === targetTime24;
       
-      console.log(`Session ${session.id}: Date ${sessionDateStr} vs ${targetDateStr} (${isDateMatch}), Time ${sessionTime} vs ${targetTime24} (${isTimeMatch})`);
+      console.log(`Session ${session.id}: Date ${format(sessionDate, 'yyyy-MM-dd')} vs ${format(date, 'yyyy-MM-dd')} (${isDateMatch}), Time ${sessionTime} vs ${targetTime24} (${isTimeMatch})`);
       
       return isDateMatch && isTimeMatch;
     });
@@ -186,20 +184,18 @@ const CalendarView = () => {
   };
 
   const getSessionsForDay = (date: Date) => {
-    const targetDateStr = format(date, 'yyyy-MM-dd');
-    console.log(`Getting sessions for day: ${targetDateStr}`);
+    console.log(`Getting sessions for day: ${format(date, 'yyyy-MM-dd')}`);
     
     const daySessions = sessions.filter(session => {
-      // Normalize session date - ensure consistent date format
-      const sessionDate = new Date(session.date + 'T00:00:00');
-      const sessionDateStr = format(sessionDate, 'yyyy-MM-dd');
+      // Parse the session date properly using parseISO
+      const sessionDate = parseISO(session.date);
       
-      const isMatch = sessionDateStr === targetDateStr;
-      console.log(`Session ${session.id}: ${sessionDateStr} vs ${targetDateStr} = ${isMatch}`);
+      const isMatch = isSameDay(sessionDate, date);
+      console.log(`Session ${session.id}: ${format(sessionDate, 'yyyy-MM-dd')} vs ${format(date, 'yyyy-MM-dd')} = ${isMatch}`);
       return isMatch;
     });
     
-    console.log(`Found ${daySessions.length} sessions for ${targetDateStr}:`, daySessions);
+    console.log(`Found ${daySessions.length} sessions for ${format(date, 'yyyy-MM-dd')}:`, daySessions);
     return daySessions;
   };
 
