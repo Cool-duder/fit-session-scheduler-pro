@@ -1,9 +1,9 @@
+
 import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Download, Upload, Plus } from "lucide-react";
 import AddClientDialog from "./AddClientDialog";
-import BulkClientImport from "./BulkClientImport";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { format, parseISO } from "date-fns";
@@ -152,8 +152,6 @@ const ClientsViewHeader = ({
   if (isMobile) {
     return (
       <div className="space-y-4">
-        <BulkClientImport onAddClient={onAddClient} />
-        
         {/* Mobile Search */}
         <div className="relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -203,11 +201,9 @@ const ClientsViewHeader = ({
     );
   }
 
-  // Desktop version - keep existing code
+  // Desktop version
   return (
     <div className="space-y-4">
-      <BulkClientImport onAddClient={onAddClient} />
-      
       <div className="flex items-center justify-between">
         <div className="flex-1 max-w-md">
           <div className="relative">
