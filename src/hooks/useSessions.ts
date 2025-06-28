@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
@@ -103,8 +102,7 @@ export const useSessions = () => {
           duration: sessionData.duration,
           package: sessionData.package,
           status: sessionData.status || 'confirmed',
-          location: sessionData.location || 'TBD',
-          price: sessionData.price
+          location: sessionData.location || 'TBD'
         }])
         .select()
         .single()
@@ -173,9 +171,12 @@ export const useSessions = () => {
       
       console.log('Formatted updates:', updates);
       
+      // Remove price from updates since it doesn't exist in the sessions table
+      const { price, ...sessionUpdates } = updates;
+      
       const { data, error } = await supabase
         .from('sessions')
-        .update(updates)
+        .update(sessionUpdates)
         .eq('id', sessionId)
         .select()
         .single()
