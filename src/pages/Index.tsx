@@ -8,6 +8,7 @@ import MessagingCenter from "@/components/MessagingCenter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
