@@ -141,8 +141,8 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Total Revenue</p>
-                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
-                  ${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <p className={`font-bold text-gray-900 ${isMobile ? 'text-base' : 'text-xl'}`}>
+                  <span className="font-bold">$</span>{totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 <div className={`text-gray-500 ${isMobile ? 'text-xs' : 'text-xs'} space-y-0.5`}>
                   {clients.length > 0 && (
