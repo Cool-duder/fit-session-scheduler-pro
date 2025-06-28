@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ChevronLeft, ChevronRight, Clock, MapPin, Download } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, MapPin, Download, ArrowLeft } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, subMonths, eachDayOfInterval, isSameMonth } from "date-fns";
 import NewSessionDialog from "./NewSessionDialog";
 import SessionDialog from "./SessionDialog";
 import { useSessions, Session } from "@/hooks/useSessions";
 import { useClients } from "@/hooks/useClients";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const CalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -17,8 +18,10 @@ const CalendarView = () => {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
   const [todayPopoverOpen, setTodayPopoverOpen] = useState(false);
+  const [showMobileAgenda, setShowMobileAgenda] = useState(false);
   const { sessions, loading, addSession, updateSession, deleteSession, refetch } = useSessions();
   const { clients, refetch: refetchClients } = useClients();
+  const isMobile = useIsMobile();
 
   const handleAddSession = async (newSession: {
     client_id: string;
@@ -116,6 +119,9 @@ const CalendarView = () => {
 
   const goToToday = () => {
     setCurrentDate(new Date());
+    if (isMobile) {
+      setShowMobileAgenda(true);
+    }
   };
 
   // Get today's appointments
@@ -239,6 +245,103 @@ const CalendarView = () => {
 
   const todaysAppointments = getTodaysAppointments();
 
+  // Mobile Agenda View
+  if (isMobile && showMobileAgenda) {
+    return (
+      <>
+        <Card className="bg-white shadow-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowMobileAgenda(false)}
+                  className="h-9 w-9 p-0"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+                <CardTitle className="text-xl font-bold text-gray-900">
+                  Today's Schedule
+                </CardTitle>
+              </div>
+              <NewSessionDialog onAddSession={handleAddSession} />
+            </div>
+            <div className="text-sm text-gray-600 mt-2">
+              {format(new Date(), 'EEEE, MMMM d, yyyy')}
+            </div>
+          </CardHeader>
+          <CardContent className="p-4">
+            {todaysAppointments.length > 0 ? (
+              <div className="space-y-4">
+                {todaysAppointments.map((session) => {
+                  const sessionCount = getSessionCount(session);
+                  return (
+                    <div
+                      key={session.id}
+                      className={`p-4 rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-all duration-200 ${
+                        session.duration === 60 
+                          ? 'bg-blue-50 border-l-blue-500 hover:bg-blue-100' 
+                          : 'bg-green-50 border-l-green-500 hover:bg-green-100'
+                      }`}
+                      onClick={() => handleSessionClick(session)}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 text-lg">
+                            {session.client_name}
+                          </h3>
+                          <div className="flex items-center gap-2 text-gray-600 mt-1">
+                            <Clock className="w-4 h-4" />
+                            <span>{session.time.substring(0, 5)} ({session.duration}min)</span>
+                          </div>
+                          {session.location && session.location !== 'TBD' && (
+                            <div className="flex items-center gap-2 text-gray-600 mt-1">
+                              <MapPin className="w-4 h-4" />
+                              <span>{session.location}</span>
+                            </div>
+                          )}
+                          {sessionCount && (
+                            <div className="text-sm text-gray-600 mt-2 font-medium bg-white px-2 py-1 rounded inline-block">
+                              Session {sessionCount.current} of {sessionCount.total}
+                            </div>
+                          )}
+                        </div>
+                        <Badge 
+                          variant={session.status === 'confirmed' ? 'default' : 'secondary'}
+                          className="ml-2"
+                        >
+                          {session.status}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-gray-700 bg-white px-3 py-1 rounded">
+                        {session.package}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <Clock className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg">No appointments scheduled for today</p>
+                <p className="text-sm mt-2">Enjoy your free time!</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <SessionDialog
+          session={selectedSession}
+          open={sessionDialogOpen}
+          onOpenChange={setSessionDialogOpen}
+          onUpdate={handleUpdateSession}
+          onDelete={handleDeleteSession}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <Card className="bg-white shadow-sm">
@@ -273,65 +376,77 @@ const CalendarView = () => {
                 </Button>
               </div>
               <div className="flex items-center gap-2">
-                <Popover open={todayPopoverOpen} onOpenChange={setTodayPopoverOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={goToToday}
-                      className="px-3"
-                    >
-                      Today
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 p-4" align="center">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                        <Clock className="w-4 h-4" />
-                        <span>{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
-                      </div>
-                      <div className="border-t pt-3">
-                        <h4 className="text-sm font-medium text-gray-900 mb-2">
-                          Today's Appointments ({todaysAppointments.length})
-                        </h4>
-                        {todaysAppointments.length > 0 ? (
-                          <div className="space-y-2 max-h-48 overflow-y-auto">
-                            {todaysAppointments.map((session) => (
-                              <div
-                                key={session.id}
-                                className="flex items-center justify-between p-2 bg-gray-50 rounded-md text-sm"
-                              >
-                                <div className="flex-1">
-                                  <div className="font-medium text-gray-900">
-                                    {session.client_name}
-                                  </div>
-                                  <div className="text-gray-600 flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    <span>{session.time.substring(0, 5)} ({session.duration}min)</span>
-                                  </div>
-                                  {session.location && session.location !== 'TBD' && (
-                                    <div className="text-gray-600 flex items-center gap-1">
-                                      <MapPin className="w-3 h-3" />
-                                      <span className="text-xs">{session.location}</span>
-                                    </div>
-                                  )}
-                                </div>
-                                <Badge 
-                                  variant={session.status === 'confirmed' ? 'default' : 'secondary'}
-                                  className="text-xs"
+                {!isMobile && (
+                  <Popover open={todayPopoverOpen} onOpenChange={setTodayPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToToday}
+                        className="px-3"
+                      >
+                        Today
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-4" align="center">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                          <Clock className="w-4 h-4" />
+                          <span>{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
+                        </div>
+                        <div className="border-t pt-3">
+                          <h4 className="text-sm font-medium text-gray-900 mb-2">
+                            Today's Appointments ({todaysAppointments.length})
+                          </h4>
+                          {todaysAppointments.length > 0 ? (
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                              {todaysAppointments.map((session) => (
+                                <div
+                                  key={session.id}
+                                  className="flex items-center justify-between p-2 bg-gray-50 rounded-md text-sm"
                                 >
-                                  {session.status}
-                                </Badge>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-500">No appointments scheduled for today</p>
-                        )}
+                                  <div className="flex-1">
+                                    <div className="font-medium text-gray-900">
+                                      {session.client_name}
+                                    </div>
+                                    <div className="text-gray-600 flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      <span>{session.time.substring(0, 5)} ({session.duration}min)</span>
+                                    </div>
+                                    {session.location && session.location !== 'TBD' && (
+                                      <div className="text-gray-600 flex items-center gap-1">
+                                        <MapPin className="w-3 h-3" />
+                                        <span className="text-xs">{session.location}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <Badge 
+                                    variant={session.status === 'confirmed' ? 'default' : 'secondary'}
+                                    className="text-xs"
+                                  >
+                                    {session.status}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500">No appointments scheduled for today</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                    </PopoverContent>
+                  </Popover>
+                )}
+                {isMobile && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToToday}
+                    className="px-3"
+                  >
+                    Today
+                  </Button>
+                )}
                 <Button
                   variant={viewMode === 'week' ? 'default' : 'outline'}
                   size="sm"
@@ -350,15 +465,17 @@ const CalendarView = () => {
                 </Button>
               </div>
               <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={exportToICalendar}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Export Calendar
-                </Button>
+                {!isMobile && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={exportToICalendar}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export Calendar
+                  </Button>
+                )}
                 <NewSessionDialog onAddSession={handleAddSession} />
               </div>
             </div>
