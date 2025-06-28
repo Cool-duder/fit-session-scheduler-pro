@@ -307,8 +307,8 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
               Delete Session
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogFooter>
-      </Dialog>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
