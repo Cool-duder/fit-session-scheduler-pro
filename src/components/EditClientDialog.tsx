@@ -147,6 +147,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-y-auto max-h-[calc(95vh-120px)]">
           {/* Left Column - Client Information Form */}
           <div className="space-y-6">
+            {/* Personal Information Section */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
               <h3 className="text-xl font-semibold text-blue-900 mb-6 flex items-center gap-2">
                 <User className="h-5 w-5" />
@@ -220,25 +221,29 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                     <SelectTrigger className="mt-1 bg-white border-gray-200 focus:border-green-400">
                       <SelectValue placeholder="Select a package" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
                       {packages.map((pkg) => (
-                        <SelectItem key={pkg.id} value={pkg.name}>
-                          <div className="flex items-center justify-between w-full min-w-[300px]">
+                        <SelectItem 
+                          key={pkg.id} 
+                          value={pkg.name}
+                          className="cursor-pointer hover:bg-gray-50 focus:bg-gray-50"
+                        >
+                          <div className="flex items-center justify-between w-full min-w-[350px] py-2">
                             <div className="flex flex-col items-start">
-                              <span className="font-medium text-base">{pkg.name}</span>
-                              <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+                              <span className="font-semibold text-gray-900 text-base">{pkg.name}</span>
+                              <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                                 <div className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
-                                  <span>{pkg.sessions} sessions</span>
+                                  <span className="font-medium">{pkg.sessions} sessions</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
-                                  <span>{pkg.duration} min</span>
+                                  <span className="font-medium">{pkg.duration} min</span>
                                 </div>
                               </div>
                             </div>
-                            <div className="flex items-center gap-1 font-bold text-green-600 text-lg ml-4">
-                              <DollarSign className="w-4 h-4" />
+                            <div className="flex items-center gap-1 font-bold text-green-600 text-lg ml-6">
+                              <DollarSign className="w-5 h-5" />
                               <span>${pkg.price}</span>
                             </div>
                           </div>
