@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +57,21 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
     return isSameDay(sessionDate, today);
   });
 
+  // Calculate today's revenue from payments made today
+  const todaysRevenue = React.useMemo(() => {
+    const today = new Date();
+    return payments.reduce((sum, payment) => {
+      if (payment.payment_date) {
+        const paymentDate = new Date(payment.payment_date);
+        if (isSameDay(paymentDate, today)) {
+          const amount = Number(payment.amount) || 0;
+          return sum + amount;
+        }
+      }
+      return sum;
+    }, 0);
+  }, [payments]);
+
   // Calculate total revenue from both payments and client packages
   const totalRevenue = React.useMemo(() => {
     console.log('=== TOTAL REVENUE CALCULATION ===');
@@ -86,7 +102,7 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
+      <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-5'}`}>
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
             <div className="flex items-center justify-between">
@@ -110,6 +126,22 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
               </div>
               <div className={`bg-green-100 rounded-lg flex items-center justify-center ${isMobile ? 'h-8 w-8' : 'h-12 w-12'}`}>
                 <Calendar className={`text-green-600 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'}`} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white">
+          <CardContent className={isMobile ? "p-4" : "p-6"}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Today's Revenue</p>
+                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+                  ${todaysRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div className={`bg-emerald-100 rounded-lg flex items-center justify-center ${isMobile ? 'h-8 w-8' : 'h-12 w-12'}`}>
+                <DollarSign className={`text-emerald-600 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'}`} />
               </div>
             </div>
           </CardContent>
