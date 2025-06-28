@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -57,17 +56,32 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
     return isSameDay(sessionDate, today);
   });
 
-  // Calculate total revenue with better accuracy and debugging
+  // Calculate total revenue from both payments and client packages
   const totalRevenue = React.useMemo(() => {
-    console.log('All payments:', payments);
-    const revenue = payments.reduce((sum, payment) => {
+    console.log('=== TOTAL REVENUE CALCULATION ===');
+    
+    // Revenue from recorded payments
+    const paymentsRevenue = payments.reduce((sum, payment) => {
       const amount = Number(payment.amount) || 0;
       console.log(`Payment ID: ${payment.id}, Amount: ${payment.amount}, Parsed: ${amount}`);
       return sum + amount;
     }, 0);
-    console.log('Total calculated revenue:', revenue);
-    return revenue;
-  }, [payments]);
+    console.log('Total from payments:', paymentsRevenue);
+    
+    // Revenue from client packages (price field)
+    const packageRevenue = clients.reduce((sum, client) => {
+      const amount = Number(client.price) || 0;
+      console.log(`Client: ${client.name}, Package: ${client.package}, Price: ${client.price}, Parsed: ${amount}`);
+      return sum + amount;
+    }, 0);
+    console.log('Total from client packages:', packageRevenue);
+    
+    const totalRevenue = paymentsRevenue + packageRevenue;
+    console.log('TOTAL COMBINED REVENUE:', totalRevenue);
+    console.log('=== END CALCULATION ===');
+    
+    return totalRevenue;
+  }, [payments, clients]);
 
   return (
     <div className="space-y-6">
@@ -109,11 +123,14 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
                 <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
                   ${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
-                {!paymentsLoading && payments.length > 0 && (
-                  <p className={`text-gray-500 ${isMobile ? 'text-xs' : 'text-xs'}`}>
-                    {payments.length} payment{payments.length !== 1 ? 's' : ''} recorded
-                  </p>
-                )}
+                <div className={`text-gray-500 ${isMobile ? 'text-xs' : 'text-xs'} space-y-0.5`}>
+                  {clients.length > 0 && (
+                    <p>{clients.length} package{clients.length !== 1 ? 's' : ''}</p>
+                  )}
+                  {payments.length > 0 && (
+                    <p>{payments.length} payment{payments.length !== 1 ? 's' : ''}</p>
+                  )}
+                </div>
               </div>
               <div className={`bg-purple-100 rounded-lg flex items-center justify-center ${isMobile ? 'h-8 w-8' : 'h-12 w-12'}`}>
                 <DollarSign className={`text-purple-600 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'}`} />
