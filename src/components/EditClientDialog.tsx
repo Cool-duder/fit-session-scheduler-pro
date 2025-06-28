@@ -228,21 +228,9 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                           value={pkg.name}
                           className="cursor-pointer hover:bg-gray-50 focus:bg-gray-50"
                         >
-                          <div className="flex items-center justify-between w-full min-w-[350px] py-2">
-                            <div className="flex flex-col items-start">
-                              <span className="font-semibold text-gray-900 text-base">{pkg.name}</span>
-                              <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
-                                  <span className="font-medium">{pkg.sessions} sessions</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  <span className="font-medium">{pkg.duration} min</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1 font-bold text-green-600 text-lg ml-6">
+                          <div className="flex items-center justify-between w-full min-w-[300px] py-2">
+                            <span className="font-semibold text-gray-900 text-base">{pkg.name}</span>
+                            <div className="flex items-center gap-1 font-bold text-green-600 text-lg">
                               <DollarSign className="w-5 h-5" />
                               <span>${pkg.price}</span>
                             </div>
