@@ -43,7 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           <div style="border-top: 1px solid #e9ecef; padding-top: 20px; text-align: center;">
             <p style="color: #6c757d; font-size: 14px; margin: 0;">
-              This is an automated message from your training team.
+              This is an automated message from Frequency Fitness.
             </p>
           </div>
         </div>
@@ -51,7 +51,7 @@ const handler = async (req: Request): Promise<Response> => {
     };
 
     const emailResponse = await resend.emails.send({
-      from: "Training Notifications <onboarding@resend.dev>",
+      from: "Frequency Fitness <frequencyfitness@gmail.com>",
       to: [to],
       subject: subject,
       ...emailContent,

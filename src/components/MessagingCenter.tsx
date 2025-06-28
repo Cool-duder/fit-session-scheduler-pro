@@ -5,17 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Send, Clock, MessageSquare, Users, Mail } from "lucide-react";
+import { Send, Clock, MessageSquare, Users, Mail, CheckCircle } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { useSessions } from "@/hooks/useSessions";
 import { useClients } from "@/hooks/useClients";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const MessagingCenter = () => {
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
   const [messageTemplate, setMessageTemplate] = useState(
     "Hi {clientName}! {messageType} you have a {duration}-minute training session scheduled for {sessionDate} at {time}. See you soon! 💪"
   );
+  const [sendingEmails, setSendingEmails] = useState(false);
+  const [sentEmails, setSentEmails] = useState<Set<number>>(new Set());
   const { sessions, loading } = useSessions();
   const { clients } = useClients();
   const { toast } = useToast();
@@ -41,7 +44,7 @@ const MessagingCenter = () => {
     return client?.email || 'no-email@example.com';
   };
 
-  // Filter sessions for today and tomorrow and add real email addresses and sent status
+  // Filter sessions for today and tomorrow and add real email addresses
   const todaySessions = sessions
     .filter(session => session.date === todayDateString)
     .map((session, index) => ({
@@ -51,7 +54,7 @@ const MessagingCenter = () => {
       time12Hour: convertTo12Hour(session.time.substring(0, 5)), // Convert to 12-hour format
       duration: session.duration,
       email: getClientEmail(session.client_id), // Use real email from clients table
-      sent: Math.random() > 0.7, // Randomly mark some as sent for demo
+      sent: sentEmails.has(parseInt(session.id.slice(0, 8), 16)),
       sessionType: 'today' as const,
       date: todayDateString,
       client_id: session.client_id
@@ -66,7 +69,7 @@ const MessagingCenter = () => {
       time12Hour: convertTo12Hour(session.time.substring(0, 5)), // Convert to 12-hour format
       duration: session.duration,
       email: getClientEmail(session.client_id), // Use real email from clients table
-      sent: Math.random() > 0.7, // Randomly mark some as sent for demo
+      sent: sentEmails.has(parseInt(session.id.slice(0, 8), 16) + 1000),
       sessionType: 'tomorrow' as const,
       date: tomorrowDateString,
       client_id: session.client_id
@@ -92,53 +95,87 @@ const MessagingCenter = () => {
     }
   };
 
-  const generatePreview = (session: any) => {
+  const generateEmailMessage = (session: any) => {
     const messageType = session.sessionType === 'today' 
       ? 'Just a reminder that' 
       : 'Just a friendly reminder that';
     
-    const sessionDate = session.sessionType === 'today' 
-      ? 'today' 
-      : 'tomorrow';
+    const sessionDate = session.sessionType === 'today' ? 'today' : 'tomorrow';
 
     return messageTemplate
       .replace('{clientName}', session.clientName)
       .replace('{messageType}', messageType)
       .replace('{sessionDate}', sessionDate)
       .replace('{duration}', session.duration.toString())
-      .replace('{time}', session.time12Hour); // Use 12-hour format
+      .replace('{time}', session.time12Hour);
   };
 
   const generateSubject = (session: any) => {
     const sessionDate = session.sessionType === 'today' ? 'Today' : 'Tomorrow';
-    return `Training Session Reminder - ${sessionDate} at ${session.time12Hour}`; // Use 12-hour format
+    return `Training Session Reminder - ${sessionDate} at ${session.time12Hour}`;
   };
 
-  const handleSendEmails = () => {
+  const handleSendEmails = async () => {
     if (selectedClients.length === 0) return;
 
+    setSendingEmails(true);
     const selectedSessions = allSessions.filter(s => selectedClients.includes(s.id));
-    
-    // Create mailto links for each selected client
-    const emailLinks = selectedSessions.map(session => {
-      const subject = encodeURIComponent(generateSubject(session));
-      const body = encodeURIComponent(generatePreview(session));
-      return `mailto:${session.email}?subject=${subject}&body=${body}`;
-    });
+    let successCount = 0;
+    let errorCount = 0;
 
-    // Open each mailto link (browsers may block multiple windows, so we'll open them one by one with delays)
-    emailLinks.forEach((link, index) => {
-      setTimeout(() => {
-        window.open(link, '_blank');
-      }, index * 500); // 500ms delay between each email
-    });
+    try {
+      for (const session of selectedSessions) {
+        try {
+          const { error } = await supabase.functions.invoke('send-email', {
+            body: {
+              to: session.email,
+              subject: generateSubject(session),
+              message: generateEmailMessage(session),
+              clientName: session.clientName,
+              isHtml: false
+            }
+          });
 
-    toast({
-      title: "Email Client Opened",
-      description: `Opening your email client for ${selectedClients.length} email${selectedClients.length > 1 ? 's' : ''}. Please send them from your email client.`,
-    });
+          if (error) {
+            console.error('Error sending email to', session.email, ':', error);
+            errorCount++;
+          } else {
+            console.log('Email sent successfully to', session.email);
+            setSentEmails(prev => new Set(prev).add(session.id));
+            successCount++;
+          }
+        } catch (error) {
+          console.error('Error sending email to', session.email, ':', error);
+          errorCount++;
+        }
+      }
 
-    setSelectedClients([]);
+      if (successCount > 0) {
+        toast({
+          title: "Emails Sent Successfully! ✅",
+          description: `${successCount} email${successCount > 1 ? 's' : ''} sent successfully${errorCount > 0 ? `. ${errorCount} failed to send.` : '.'}`,
+        });
+      }
+
+      if (errorCount > 0 && successCount === 0) {
+        toast({
+          title: "Email Sending Failed",
+          description: `Failed to send ${errorCount} email${errorCount > 1 ? 's' : ''}. Please try again.`,
+          variant: "destructive",
+        });
+      }
+
+      setSelectedClients([]);
+    } catch (error) {
+      console.error('Error in email sending process:', error);
+      toast({
+        title: "Error",
+        description: "An error occurred while sending emails. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingEmails(false);
+    }
   };
 
   if (loading) {
@@ -179,7 +216,7 @@ const MessagingCenter = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{sentCount}</div>
-            <p className="text-xs text-muted-foreground">Already notified</p>
+            <p className="text-xs text-muted-foreground">Successfully sent</p>
           </CardContent>
         </Card>
 
@@ -201,7 +238,7 @@ const MessagingCenter = () => {
             Client Email Notifications
           </CardTitle>
           <p className="text-sm text-gray-600">
-            Send email reminders for today's and tomorrow's sessions via your email client
+            Send automated email reminders from frequencyfitness@gmail.com for today's and tomorrow's sessions
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -254,7 +291,7 @@ const MessagingCenter = () => {
                         <div
                           key={session.id}
                           className={`flex items-center justify-between p-4 border rounded-lg ${
-                            session.sent ? 'bg-gray-50 opacity-60' : 'bg-blue-50'
+                            session.sent ? 'bg-green-50 border-green-200' : 'bg-blue-50'
                           }`}
                         >
                           <div className="flex items-center space-x-3">
@@ -278,6 +315,7 @@ const MessagingCenter = () => {
                           <div className="text-right">
                             {session.sent ? (
                               <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                <CheckCircle className="w-3 h-3 mr-1" />
                                 Sent
                               </Badge>
                             ) : (
@@ -304,7 +342,7 @@ const MessagingCenter = () => {
                         <div
                           key={session.id}
                           className={`flex items-center justify-between p-4 border rounded-lg ${
-                            session.sent ? 'bg-gray-50 opacity-60' : 'bg-white'
+                            session.sent ? 'bg-green-50 border-green-200' : 'bg-white'
                           }`}
                         >
                           <div className="flex items-center space-x-3">
@@ -328,6 +366,7 @@ const MessagingCenter = () => {
                           <div className="text-right">
                             {session.sent ? (
                               <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                <CheckCircle className="w-3 h-3 mr-1" />
                                 Sent
                               </Badge>
                             ) : (
@@ -352,10 +391,13 @@ const MessagingCenter = () => {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <div className="font-medium mb-2">Sample email for {allSessions.find(s => selectedClients.includes(s.id))?.clientName}:</div>
                 <div className="text-sm text-gray-600 mb-2">
+                  <strong>From:</strong> Frequency Fitness &lt;frequencyfitness@gmail.com&gt;
+                </div>
+                <div className="text-sm text-gray-600 mb-2">
                   <strong>Subject:</strong> {generateSubject(allSessions.find(s => selectedClients.includes(s.id)))}
                 </div>
                 <p className="text-sm italic">
-                  {generatePreview(allSessions.find(s => selectedClients.includes(s.id)))}
+                  {generateEmailMessage(allSessions.find(s => selectedClients.includes(s.id)))}
                 </p>
               </div>
             </div>
@@ -365,11 +407,20 @@ const MessagingCenter = () => {
           <div className="flex justify-end">
             <Button
               onClick={handleSendEmails}
-              disabled={selectedClients.length === 0}
+              disabled={selectedClients.length === 0 || sendingEmails}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              <Send className="w-4 h-4 mr-2" />
-              Open Email Client ({selectedClients.length})
+              {sendingEmails ? (
+                <>
+                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                  Sending Emails...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Send Emails ({selectedClients.length})
+                </>
+              )}
             </Button>
           </div>
         </CardContent>
