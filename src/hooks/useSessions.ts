@@ -14,6 +14,7 @@ export type Session = {
   location?: string
   payment_type?: string
   payment_status?: string
+  price?: number
 }
 
 export const useSessions = () => {
