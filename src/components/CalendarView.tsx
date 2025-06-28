@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChevronLeft, ChevronRight, Clock, MapPin, Download } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, subMonths, eachDayOfInterval, isSameMonth } from "date-fns";
 import NewSessionDialog from "./NewSessionDialog";
@@ -14,6 +15,7 @@ const CalendarView = () => {
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
+  const [todayPopoverOpen, setTodayPopoverOpen] = useState(false);
   const { sessions, loading, addSession, updateSession, deleteSession, refetch } = useSessions();
 
   const handleAddSession = async (newSession: {
@@ -91,6 +93,20 @@ const CalendarView = () => {
 
   const goToToday = () => {
     setCurrentDate(new Date());
+  };
+
+  // Get today's appointments
+  const getTodaysAppointments = () => {
+    const today = new Date();
+    const todayStr = format(today, 'yyyy-MM-dd');
+    
+    return sessions
+      .filter(session => {
+        const sessionDate = new Date(session.date);
+        const sessionDateStr = format(sessionDate, 'yyyy-MM-dd');
+        return sessionDateStr === todayStr;
+      })
+      .sort((a, b) => a.time.localeCompare(b.time));
   };
 
   const getSessionForTimeSlot = (date: Date, time: string) => {
@@ -198,6 +214,8 @@ const CalendarView = () => {
     );
   }
 
+  const todaysAppointments = getTodaysAppointments();
+
   return (
     <>
       <Card className="bg-white shadow-sm">
@@ -207,24 +225,6 @@ const CalendarView = () => {
               Training Schedule
             </CardTitle>
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-3">
-                <Button
-                  variant={viewMode === 'week' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('week')}
-                  className="min-w-[70px]"
-                >
-                  Week
-                </Button>
-                <Button
-                  variant={viewMode === 'month' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('month')}
-                  className="min-w-[70px]"
-                >
-                  Month
-                </Button>
-              </div>
               <div className="flex items-center gap-3">
                 <Button 
                   variant="outline" 
@@ -248,13 +248,82 @@ const CalendarView = () => {
                 >
                   <ChevronRight className="w-4 h-4" />
                 </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Popover open={todayPopoverOpen} onOpenChange={setTodayPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToToday}
+                      className="px-3"
+                    >
+                      Today
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-4" align="center">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                        <Clock className="w-4 h-4" />
+                        <span>{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
+                      </div>
+                      <div className="border-t pt-3">
+                        <h4 className="text-sm font-medium text-gray-900 mb-2">
+                          Today's Appointments ({todaysAppointments.length})
+                        </h4>
+                        {todaysAppointments.length > 0 ? (
+                          <div className="space-y-2 max-h-48 overflow-y-auto">
+                            {todaysAppointments.map((session) => (
+                              <div
+                                key={session.id}
+                                className="flex items-center justify-between p-2 bg-gray-50 rounded-md text-sm"
+                              >
+                                <div className="flex-1">
+                                  <div className="font-medium text-gray-900">
+                                    {session.client_name}
+                                  </div>
+                                  <div className="text-gray-600 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    <span>{session.time.substring(0, 5)} ({session.duration}min)</span>
+                                  </div>
+                                  {session.location && session.location !== 'TBD' && (
+                                    <div className="text-gray-600 flex items-center gap-1">
+                                      <MapPin className="w-3 h-3" />
+                                      <span className="text-xs">{session.location}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <Badge 
+                                  variant={session.status === 'confirmed' ? 'default' : 'secondary'}
+                                  className="text-xs"
+                                >
+                                  {session.status}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">No appointments scheduled for today</p>
+                        )}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <Button
-                  variant="outline"
+                  variant={viewMode === 'week' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={goToToday}
-                  className="px-3"
+                  onClick={() => setViewMode('week')}
+                  className="min-w-[70px]"
                 >
-                  Today
+                  Week
+                </Button>
+                <Button
+                  variant={viewMode === 'month' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('month')}
+                  className="min-w-[70px]"
+                >
+                  Month
                 </Button>
               </div>
               <div className="flex items-center gap-3">
