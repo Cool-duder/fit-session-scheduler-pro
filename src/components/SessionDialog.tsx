@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -5,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Trash2, Edit3 } from "lucide-react";
+import { Trash2, Edit3, DollarSign } from "lucide-react";
 import { Session } from "@/hooks/useSessions";
+import { usePackages } from "@/hooks/usePackages";
 
 interface SessionDialogProps {
   session: Session | null;
@@ -19,14 +21,16 @@ interface SessionDialogProps {
 const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: SessionDialogProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const { packages } = usePackages();
   const [formData, setFormData] = useState({
     date: "",
     time: "",
     duration: 60,
     location: "",
-    status: "confirmed"
+    status: "confirmed",
+    package: "",
+    price: 120
   });
-  // Add state to track the current session data for display
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
 
   React.useEffect(() => {
@@ -34,10 +38,12 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
       setCurrentSession(session);
       setFormData({
         date: session.date,
-        time: session.time.substring(0, 5), // Remove seconds for display
+        time: session.time.substring(0, 5),
         duration: session.duration,
         location: session.location || "",
-        status: session.status
+        status: session.status,
+        package: session.package,
+        price: session.price || 120
       });
     }
   }, [session]);
@@ -62,7 +68,17 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
     return `${displayHour}:${displayMinute} ${period}`;
   };
 
-  const timeSlots = generateTimeSlots();
+  const handlePackageChange = (packageName: string) => {
+    const selectedPackage = packages.find(pkg => pkg.name === packageName);
+    if (selectedPackage) {
+      setFormData(prev => ({
+        ...prev,
+        package: packageName,
+        price: selectedPackage.price,
+        duration: selectedPackage.duration
+      }));
+    }
+  };
 
   const handleSave = async () => {
     if (session) {
@@ -72,16 +88,17 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
         time: formData.time,
         duration: formData.duration,
         location: formData.location,
-        status: formData.status
+        status: formData.status,
+        package: formData.package,
+        price: formData.price
       };
       
       await onUpdate(session.id, updatedSessionData);
       
-      // Update the current session display data immediately
       setCurrentSession({
         ...session,
         ...updatedSessionData,
-        time: formData.time.length === 5 ? formData.time + ':00' : formData.time // Ensure proper time format
+        time: formData.time.length === 5 ? formData.time + ':00' : formData.time
       });
       
       setIsEditing(false);
@@ -101,7 +118,7 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               Session Details
@@ -167,6 +184,50 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
                 </div>
               )}
             </div>
+
+            <div>
+              <Label htmlFor="package">Package</Label>
+              {isEditing ? (
+                <Select onValueChange={handlePackageChange} value={formData.package}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select package" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {packages.map((pkg) => (
+                      <SelectItem key={pkg.id} value={pkg.name}>
+                        <div className="flex justify-between items-center w-full">
+                          <span>{pkg.name}</span>
+                          <span className="ml-4 font-semibold text-green-600">${pkg.price}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="p-2 bg-gray-50 rounded">{currentSession.package}</div>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="price">Price</Label>
+              {isEditing ? (
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="price"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.price}
+                    onChange={(e) => setFormData({...formData, price: parseInt(e.target.value) || 0})}
+                    className="pl-10"
+                    placeholder="Session price"
+                  />
+                </div>
+              ) : (
+                <div className="p-2 bg-gray-50 rounded">${currentSession.price || 120}</div>
+              )}
+            </div>
             
             <div>
               <Label htmlFor="duration">Duration (minutes)</Label>
@@ -217,11 +278,6 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
                 <div className="p-2 bg-gray-50 rounded capitalize">{currentSession.status}</div>
               )}
             </div>
-            
-            <div>
-              <Label>Package</Label>
-              <div className="p-2 bg-gray-50 rounded">{currentSession.package}</div>
-            </div>
           </div>
           
           {isEditing && (
@@ -251,8 +307,8 @@ const SessionDialog = ({ session, open, onOpenChange, onUpdate, onDelete }: Sess
               Delete Session
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        </AlertDialogFooter>
+      </Dialog>
     </>
   );
 };
