@@ -9,6 +9,7 @@ import { format, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks,
 import NewSessionDialog from "./NewSessionDialog";
 import SessionDialog from "./SessionDialog";
 import { useSessions, Session } from "@/hooks/useSessions";
+import { useClients } from "@/hooks/useClients";
 
 const CalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -17,6 +18,7 @@ const CalendarView = () => {
   const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
   const [todayPopoverOpen, setTodayPopoverOpen] = useState(false);
   const { sessions, loading, addSession, updateSession, deleteSession, refetch } = useSessions();
+  const { clients } = useClients();
 
   const handleAddSession = async (newSession: {
     client_id: string;
@@ -69,6 +71,26 @@ const CalendarView = () => {
       }
     }
     return slots;
+  };
+
+  const getSessionCount = (session: Session) => {
+    const client = clients.find(c => c.id === session.client_id);
+    if (!client) return null;
+    
+    const sessionsUsed = client.total_sessions - client.sessions_left;
+    // Find all sessions for this client up to and including the current session date
+    const clientSessions = sessions
+      .filter(s => s.client_id === session.client_id)
+      .filter(s => new Date(s.date) <= new Date(session.date))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.time.localeCompare(b.time));
+    
+    const sessionIndex = clientSessions.findIndex(s => s.id === session.id);
+    const currentSessionNumber = sessionIndex >= 0 ? sessionIndex + 1 : sessionsUsed + 1;
+    
+    return {
+      current: currentSessionNumber,
+      total: client.total_sessions
+    };
   };
 
   const timeSlots = generateTimeSlots();
@@ -375,6 +397,7 @@ const CalendarView = () => {
                     </div>
                     {weekDays.map((day) => {
                       const session = getSessionForTimeSlot(day, time);
+                      const sessionCount = session ? getSessionCount(session) : null;
                       return (
                         <div key={`${day.toISOString()}-${time}`} className="min-h-[60px] border-r border-gray-100 last:border-r-0 p-1 overflow-hidden">
                           {session && (
@@ -398,6 +421,11 @@ const CalendarView = () => {
                                   <div className="flex items-center gap-1 text-gray-600 mb-1">
                                     <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
                                     <span className="truncate text-xs">{session.location}</span>
+                                  </div>
+                                )}
+                                {sessionCount && (
+                                  <div className="text-xs text-gray-600 mb-1">
+                                    {sessionCount.current} of {sessionCount.total}
                                   </div>
                                 )}
                               </div>
@@ -447,36 +475,44 @@ const CalendarView = () => {
                         {format(day, 'd')}
                       </div>
                       <div className="space-y-1 overflow-hidden">
-                        {daySessions.map((session) => (
-                          <div
-                            key={session.id}
-                            className={`text-xs p-2 rounded-md cursor-pointer hover:shadow-sm transition-all duration-200 overflow-hidden ${
-                              session.duration === 60 
-                                ? 'bg-blue-50 hover:bg-blue-100 border border-blue-200' 
-                                : 'bg-green-50 hover:bg-green-100 border border-green-200'
-                            }`}
-                            onClick={() => handleSessionClick(session)}
-                          >
-                            <div className="font-semibold truncate text-gray-900 mb-1 text-xs leading-tight">
-                              {session.client_name}
-                            </div>
-                            <div className="text-gray-600 mb-1 text-xs truncate">
-                              {session.time.substring(0, 5)} ({session.duration}min)
-                            </div>
-                            {session.location && session.location !== 'TBD' && (
-                              <div className="flex items-center gap-1 text-gray-600 mb-1">
-                                <MapPin className="w-2 h-2 flex-shrink-0" />
-                                <span className="truncate text-xs">{session.location}</span>
-                              </div>
-                            )}
-                            <Badge 
-                              variant={session.status === 'confirmed' ? 'default' : 'secondary'}
-                              className="text-xs px-1.5 py-0.5 h-4 leading-none"
+                        {daySessions.map((session) => {
+                          const sessionCount = getSessionCount(session);
+                          return (
+                            <div
+                              key={session.id}
+                              className={`text-xs p-2 rounded-md cursor-pointer hover:shadow-sm transition-all duration-200 overflow-hidden ${
+                                session.duration === 60 
+                                  ? 'bg-blue-50 hover:bg-blue-100 border border-blue-200' 
+                                  : 'bg-green-50 hover:bg-green-100 border border-green-200'
+                              }`}
+                              onClick={() => handleSessionClick(session)}
                             >
-                              {session.status}
-                            </Badge>
-                          </div>
-                        ))}
+                              <div className="font-semibold truncate text-gray-900 mb-1 text-xs leading-tight">
+                                {session.client_name}
+                              </div>
+                              <div className="text-gray-600 mb-1 text-xs truncate">
+                                {session.time.substring(0, 5)} ({session.duration}min)
+                              </div>
+                              {session.location && session.location !== 'TBD' && (
+                                <div className="flex items-center gap-1 text-gray-600 mb-1">
+                                  <MapPin className="w-2 h-2 flex-shrink-0" />
+                                  <span className="truncate text-xs">{session.location}</span>
+                                </div>
+                              )}
+                              {sessionCount && (
+                                <div className="text-xs text-gray-600 mb-1">
+                                  {sessionCount.current} of {sessionCount.total}
+                                </div>
+                              )}
+                              <Badge 
+                                variant={session.status === 'confirmed' ? 'default' : 'secondary'}
+                                className="text-xs px-1.5 py-0.5 h-4 leading-none"
+                              >
+                                {session.status}
+                              </Badge>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );
