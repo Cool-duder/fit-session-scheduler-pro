@@ -57,8 +57,17 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
     return isSameDay(sessionDate, today);
   });
 
-  // Calculate total revenue
-  const totalRevenue = payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
+  // Calculate total revenue with better accuracy and debugging
+  const totalRevenue = React.useMemo(() => {
+    console.log('All payments:', payments);
+    const revenue = payments.reduce((sum, payment) => {
+      const amount = Number(payment.amount) || 0;
+      console.log(`Payment ID: ${payment.id}, Amount: ${payment.amount}, Parsed: ${amount}`);
+      return sum + amount;
+    }, 0);
+    console.log('Total calculated revenue:', revenue);
+    return revenue;
+  }, [payments]);
 
   return (
     <div className="space-y-6">
@@ -97,7 +106,14 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Total Revenue</p>
-                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>${totalRevenue.toFixed(2)}</p>
+                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+                  ${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                {!paymentsLoading && payments.length > 0 && (
+                  <p className={`text-gray-500 ${isMobile ? 'text-xs' : 'text-xs'}`}>
+                    {payments.length} payment{payments.length !== 1 ? 's' : ''} recorded
+                  </p>
+                )}
               </div>
               <div className={`bg-purple-100 rounded-lg flex items-center justify-center ${isMobile ? 'h-8 w-8' : 'h-12 w-12'}`}>
                 <DollarSign className={`text-purple-600 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'}`} />
