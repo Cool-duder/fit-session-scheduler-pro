@@ -7,19 +7,21 @@ import { DollarSign } from "lucide-react";
 import { Session } from "@/hooks/useSessions";
 import { usePackages } from "@/hooks/usePackages";
 
+interface FormData {
+  date: string;
+  time: string;
+  duration: number;
+  location: string;
+  status: string;
+  package: string;
+  price: number;
+}
+
 interface SessionDialogFieldsProps {
   currentSession: Session;
   isEditing: boolean;
-  formData: {
-    date: string;
-    time: string;
-    duration: number;
-    location: string;
-    status: string;
-    package: string;
-    price: number;
-  };
-  onFormDataChange: (updates: Partial<typeof formData>) => void;
+  formData: FormData;
+  onFormDataChange: (updates: Partial<FormData>) => void;
   onPackageChange: (packageName: string) => void;
 }
 
