@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -104,7 +103,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle>Edit Client - {client.name}</DialogTitle>
+          <DialogTitle>Edit Client - {formData.name}</DialogTitle>
         </DialogHeader>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -218,17 +217,24 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Package Information</h3>
             
-            {/* Package Stats */}
+            {/* Package Stats - Now using formData instead of client data */}
             <div className="bg-gray-50 p-4 rounded-lg space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Package:</span>
-                <Badge variant={client.package.includes('60MIN') ? 'default' : 'secondary'}>
-                  {client.package}
+                <Badge variant={formData.package.includes('60MIN') ? 'default' : 'secondary'}>
+                  {formData.package}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Package Price:</span>
+                <div className="flex items-center gap-1 text-green-600 font-medium">
+                  <DollarSign className="w-3 h-3" />
+                  <span>{formData.price}</span>
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Preferred Payment:</span>
-                <PaymentStatusBadge status="completed" paymentType={client.payment_type || 'Cash'} />
+                <PaymentStatusBadge status="completed" paymentType={formData.paymentType} />
               </div>
               {formData.birthday && (
                 <div className="flex justify-between items-center">
