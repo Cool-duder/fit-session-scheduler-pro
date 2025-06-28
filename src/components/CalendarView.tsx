@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,10 +11,20 @@ import { useSessions, Session } from "@/hooks/useSessions";
 
 const CalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
   const { sessions, loading, addSession, updateSession, deleteSession, refetch } = useSessions();
+
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
 
   const handleAddSession = async (newSession: {
     client_id: string;
@@ -91,6 +101,16 @@ const CalendarView = () => {
 
   const goToToday = () => {
     setCurrentDate(new Date());
+  };
+
+  // Check if we're viewing today
+  const isViewingToday = () => {
+    const today = new Date();
+    if (viewMode === 'week') {
+      return weekDays.some(day => isSameDay(day, today));
+    } else {
+      return isSameMonth(currentDate, today);
+    }
   };
 
   const getSessionForTimeSlot = (date: Date, time: string) => {
@@ -203,9 +223,17 @@ const CalendarView = () => {
       <Card className="bg-white shadow-sm">
         <CardHeader className="pb-6">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              Training Schedule
-            </CardTitle>
+            <div>
+              <CardTitle className="text-2xl font-bold text-gray-900">
+                Training Schedule
+              </CardTitle>
+              {isViewingToday() && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-blue-600">
+                  <Clock className="w-4 h-4" />
+                  <span>Today: {format(currentTime, 'EEEE, MMMM d, yyyy')} • {format(currentTime, 'h:mm a')}</span>
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3">
                 <Button
