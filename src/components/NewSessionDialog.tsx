@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -173,7 +172,6 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
                 console.log('Date input changed:', e.target.value);
                 setFormData({...formData, date: e.target.value});
               }}
-              min={new Date().toISOString().split('T')[0]} // Prevent selecting past dates
               required
             />
           </div>
