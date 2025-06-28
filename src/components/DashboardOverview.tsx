@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -54,21 +53,6 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
     return isSameDay(sessionDate, today);
   });
 
-  // Calculate today's revenue from payments made today
-  const todaysRevenue = React.useMemo(() => {
-    const today = new Date();
-    return payments.reduce((sum, payment) => {
-      if (payment.payment_date) {
-        const paymentDate = new Date(payment.payment_date);
-        if (isSameDay(paymentDate, today)) {
-          const amount = Number(payment.amount) || 0;
-          return sum + amount;
-        }
-      }
-      return sum;
-    }, 0);
-  }, [payments]);
-
   // Calculate total revenue from both payments and client packages
   const totalRevenue = React.useMemo(() => {
     const paymentsRevenue = payments.reduce((sum, payment) => {
@@ -87,16 +71,16 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-5'}`}>
+      <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
         {/* Total Clients */}
         <Card className="bg-white">
-          <CardContent className={isMobile ? "p-4" : "p-6"}>
-            <div className="flex items-center space-x-4">
-              <div className="bg-blue-100 rounded-lg p-3 flex-shrink-0">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="bg-blue-100 rounded-lg p-3">
                 <Users className="h-6 w-6 text-blue-600" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-600 mb-1">Total Clients</p>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Clients</p>
                 <p className="text-2xl font-bold text-gray-900">{clients.length}</p>
               </div>
             </div>
@@ -105,31 +89,14 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
 
         {/* Today's Sessions */}
         <Card className="bg-white">
-          <CardContent className={isMobile ? "p-4" : "p-6"}>
-            <div className="flex items-center space-x-4">
-              <div className="bg-green-100 rounded-lg p-3 flex-shrink-0">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="bg-green-100 rounded-lg p-3">
                 <Calendar className="h-6 w-6 text-green-600" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-600 mb-1">Today's Sessions</p>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Today's Sessions</p>
                 <p className="text-2xl font-bold text-gray-900">{todaySessions.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Today's Revenue */}
-        <Card className="bg-white">
-          <CardContent className={isMobile ? "p-4" : "p-6"}>
-            <div className="flex items-center space-x-4">
-              <div className="bg-emerald-100 rounded-lg p-3 flex-shrink-0">
-                <DollarSign className="h-6 w-6 text-emerald-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-600 mb-1">Today's Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  <span className="font-bold">$</span>{todaysRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
               </div>
             </div>
           </CardContent>
@@ -137,14 +104,14 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
 
         {/* Total Revenue */}
         <Card className="bg-white">
-          <CardContent className={isMobile ? "p-4" : "p-6"}>
-            <div className="flex items-center space-x-4">
-              <div className="bg-purple-100 rounded-lg p-3 flex-shrink-0">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="bg-purple-100 rounded-lg p-3">
                 <DollarSign className="h-6 w-6 text-purple-600" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-600 mb-1">Total Revenue</p>
-                <p className="text-xl font-bold text-gray-900">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                <p className="text-2xl font-bold text-gray-900">
                   <span className="font-bold">$</span>{totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 <div className="text-xs text-gray-500 mt-1 space-y-0.5">
@@ -162,13 +129,13 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
 
         {/* Active Sessions */}
         <Card className="bg-white">
-          <CardContent className={isMobile ? "p-4" : "p-6"}>
-            <div className="flex items-center space-x-4">
-              <div className="bg-orange-100 rounded-lg p-3 flex-shrink-0">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="bg-orange-100 rounded-lg p-3">
                 <TrendingUp className="h-6 w-6 text-orange-600" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-600 mb-1">Active Sessions</p>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Sessions</p>
                 <p className="text-2xl font-bold text-gray-900">{sessions.length}</p>
               </div>
             </div>
