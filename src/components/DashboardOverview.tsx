@@ -91,13 +91,13 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
         {/* Total Clients */}
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
-            <div className="flex items-center justify-between">
-              <div className="flex-1 text-center">
+            <div className="flex items-center space-x-4">
+              <div className="bg-blue-100 rounded-lg p-3 flex-shrink-0">
+                <Users className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-600 mb-1">Total Clients</p>
                 <p className="text-2xl font-bold text-gray-900">{clients.length}</p>
-              </div>
-              <div className="bg-blue-100 rounded-lg p-3 ml-3">
-                <Users className="h-6 w-6 text-blue-600" />
               </div>
             </div>
           </CardContent>
@@ -106,13 +106,13 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
         {/* Today's Sessions */}
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
-            <div className="flex items-center justify-between">
-              <div className="flex-1 text-center">
+            <div className="flex items-center space-x-4">
+              <div className="bg-green-100 rounded-lg p-3 flex-shrink-0">
+                <Calendar className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-600 mb-1">Today's Sessions</p>
                 <p className="text-2xl font-bold text-gray-900">{todaySessions.length}</p>
-              </div>
-              <div className="bg-green-100 rounded-lg p-3 ml-3">
-                <Calendar className="h-6 w-6 text-green-600" />
               </div>
             </div>
           </CardContent>
@@ -121,15 +121,15 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
         {/* Today's Revenue */}
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
-            <div className="flex items-center justify-between">
-              <div className="flex-1 text-center">
+            <div className="flex items-center space-x-4">
+              <div className="bg-emerald-100 rounded-lg p-3 flex-shrink-0">
+                <DollarSign className="h-6 w-6 text-emerald-600" />
+              </div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-600 mb-1">Today's Revenue</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  ${todaysRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <span className="font-bold">$</span>{todaysRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
-              </div>
-              <div className="bg-emerald-100 rounded-lg p-3 ml-3">
-                <DollarSign className="h-6 w-6 text-emerald-600" />
               </div>
             </div>
           </CardContent>
@@ -138,11 +138,14 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
         {/* Total Revenue */}
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
-            <div className="flex items-center justify-between">
-              <div className="flex-1 text-center">
+            <div className="flex items-center space-x-4">
+              <div className="bg-purple-100 rounded-lg p-3 flex-shrink-0">
+                <DollarSign className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-600 mb-1">Total Revenue</p>
                 <p className="text-xl font-bold text-gray-900">
-                  ${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <span className="font-bold">$</span>{totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 <div className="text-xs text-gray-500 mt-1 space-y-0.5">
                   {clients.length > 0 && (
@@ -153,9 +156,6 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
                   )}
                 </div>
               </div>
-              <div className="bg-purple-100 rounded-lg p-3 ml-3">
-                <DollarSign className="h-6 w-6 text-purple-600" />
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -163,13 +163,13 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
         {/* Active Sessions */}
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
-            <div className="flex items-center justify-between">
-              <div className="flex-1 text-center">
+            <div className="flex items-center space-x-4">
+              <div className="bg-orange-100 rounded-lg p-3 flex-shrink-0">
+                <TrendingUp className="h-6 w-6 text-orange-600" />
+              </div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-600 mb-1">Active Sessions</p>
                 <p className="text-2xl font-bold text-gray-900">{sessions.length}</p>
-              </div>
-              <div className="bg-orange-100 rounded-lg p-3 ml-3">
-                <TrendingUp className="h-6 w-6 text-orange-600" />
               </div>
             </div>
           </CardContent>
