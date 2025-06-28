@@ -92,12 +92,12 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
             <div className="flex items-center justify-between">
-              <div>
-                <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Total Clients</p>
-                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>{clients.length}</p>
+              <div className="flex-1 text-center">
+                <p className="text-sm font-medium text-gray-600 mb-1">Total Clients</p>
+                <p className="text-2xl font-bold text-gray-900">{clients.length}</p>
               </div>
-              <div className={`bg-blue-100 rounded-lg flex items-center justify-center ${isMobile ? 'h-8 w-8' : 'h-12 w-12'}`}>
-                <Users className={`text-blue-600 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'}`} />
+              <div className="bg-blue-100 rounded-lg p-3 ml-3">
+                <Users className="h-6 w-6 text-blue-600" />
               </div>
             </div>
           </CardContent>
@@ -107,12 +107,12 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
             <div className="flex items-center justify-between">
-              <div>
-                <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Today's Sessions</p>
-                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>{todaySessions.length}</p>
+              <div className="flex-1 text-center">
+                <p className="text-sm font-medium text-gray-600 mb-1">Today's Sessions</p>
+                <p className="text-2xl font-bold text-gray-900">{todaySessions.length}</p>
               </div>
-              <div className={`bg-green-100 rounded-lg flex items-center justify-center ${isMobile ? 'h-8 w-8' : 'h-12 w-12'}`}>
-                <Calendar className={`text-green-600 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'}`} />
+              <div className="bg-green-100 rounded-lg p-3 ml-3">
+                <Calendar className="h-6 w-6 text-green-600" />
               </div>
             </div>
           </CardContent>
@@ -122,14 +122,14 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
             <div className="flex items-center justify-between">
-              <div>
-                <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Today's Revenue</p>
-                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+              <div className="flex-1 text-center">
+                <p className="text-sm font-medium text-gray-600 mb-1">Today's Revenue</p>
+                <p className="text-2xl font-bold text-gray-900">
                   ${todaysRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
-              <div className={`bg-emerald-100 rounded-lg flex items-center justify-center ${isMobile ? 'h-8 w-8' : 'h-12 w-12'}`}>
-                <DollarSign className={`text-emerald-600 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'}`} />
+              <div className="bg-emerald-100 rounded-lg p-3 ml-3">
+                <DollarSign className="h-6 w-6 text-emerald-600" />
               </div>
             </div>
           </CardContent>
@@ -139,12 +139,12 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
             <div className="flex items-center justify-between">
-              <div>
-                <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Total Revenue</p>
-                <p className={`font-bold text-gray-900 ${isMobile ? 'text-base' : 'text-xl'}`}>
-                  <span className="font-bold">$</span>{totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <div className="flex-1 text-center">
+                <p className="text-sm font-medium text-gray-600 mb-1">Total Revenue</p>
+                <p className="text-xl font-bold text-gray-900">
+                  ${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
-                <div className={`text-gray-500 ${isMobile ? 'text-xs' : 'text-xs'} space-y-0.5`}>
+                <div className="text-xs text-gray-500 mt-1 space-y-0.5">
                   {clients.length > 0 && (
                     <p>{clients.length} package{clients.length !== 1 ? 's' : ''}</p>
                   )}
@@ -153,8 +153,8 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
                   )}
                 </div>
               </div>
-              <div className={`bg-purple-100 rounded-lg flex items-center justify-center ${isMobile ? 'h-8 w-8' : 'h-12 w-12'}`}>
-                <DollarSign className={`text-purple-600 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'}`} />
+              <div className="bg-purple-100 rounded-lg p-3 ml-3">
+                <DollarSign className="h-6 w-6 text-purple-600" />
               </div>
             </div>
           </CardContent>
@@ -164,12 +164,12 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
         <Card className="bg-white">
           <CardContent className={isMobile ? "p-4" : "p-6"}>
             <div className="flex items-center justify-between">
-              <div>
-                <p className={`font-medium text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Active Sessions</p>
-                <p className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>{sessions.length}</p>
+              <div className="flex-1 text-center">
+                <p className="text-sm font-medium text-gray-600 mb-1">Active Sessions</p>
+                <p className="text-2xl font-bold text-gray-900">{sessions.length}</p>
               </div>
-              <div className={`bg-orange-100 rounded-lg flex items-center justify-center ${isMobile ? 'h-8 w-8' : 'h-12 w-12'}`}>
-                <TrendingUp className={`text-orange-600 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'}`} />
+              <div className="bg-orange-100 rounded-lg p-3 ml-3">
+                <TrendingUp className="h-6 w-6 text-orange-600" />
               </div>
             </div>
           </CardContent>
