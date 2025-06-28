@@ -20,7 +20,7 @@ import { useClients } from "@/hooks/useClients";
 import { useSessions } from "@/hooks/useSessions";
 import { usePayments } from "@/hooks/usePayments";
 import AddClientDialog from "./AddClientDialog";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isSameDay } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DashboardOverviewProps {
@@ -47,11 +47,14 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
     addClient(newClient);
   };
 
-  // Get today's sessions
+  // Get today's sessions with proper date comparison
   const todaySessions = sessions.filter(session => {
+    // Normalize both dates to ensure proper comparison
     const sessionDate = new Date(session.date);
     const today = new Date();
-    return sessionDate.toDateString() === today.toDateString();
+    
+    // Use isSameDay from date-fns for accurate comparison
+    return isSameDay(sessionDate, today);
   });
 
   // Calculate total revenue
@@ -256,7 +259,7 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
                       <div className={`grid grid-cols-1 gap-1 text-gray-600 ${isMobile ? 'text-xs' : 'text-xs'}`}>
                         <div className="flex items-center gap-2">
                           <Clock className={`flex-shrink-0 ${isMobile ? 'w-2 h-2' : 'w-3 h-3'}`} />
-                          <span>{session.time}</span>
+                          <span>{session.time.substring(0, 5)}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <MapPin className={`flex-shrink-0 ${isMobile ? 'w-2 h-2' : 'w-3 h-3'}`} />
