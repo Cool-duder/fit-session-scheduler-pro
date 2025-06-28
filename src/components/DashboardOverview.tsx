@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,10 +47,12 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
     addClient(newClient);
   };
 
-  // Get today's sessions
+  // Get today's sessions - Fixed date parsing
   const todaySessions = sessions.filter(session => {
-    const sessionDate = new Date(session.date);
+    // Parse the session date properly using parseISO
+    const sessionDate = parseISO(session.date);
     const today = new Date();
+    console.log(`Dashboard: Comparing session date: ${session.date} (parsed: ${sessionDate}) with today: ${today} for session:`, session);
     return isSameDay(sessionDate, today);
   });
 
