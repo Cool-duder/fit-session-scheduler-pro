@@ -116,6 +116,15 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
 
   const selectedPackage = packages.find(pkg => pkg.name === formData.package);
 
+  // Helper function to format time from 24-hour to 12-hour format
+  const formatTime12Hour = (time24: string) => {
+    const [hours, minutes] = time24.split(':');
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -214,12 +223,24 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                     <SelectContent>
                       {packages.map((pkg) => (
                         <SelectItem key={pkg.id} value={pkg.name}>
-                          <div className="flex justify-between items-center w-full">
-                            <div className="flex flex-col">
-                              <span className="font-medium">{pkg.name}</span>
-                              <span className="text-xs text-gray-500">{pkg.sessions} sessions × {pkg.duration} min</span>
+                          <div className="flex items-center justify-between w-full min-w-[300px]">
+                            <div className="flex flex-col items-start">
+                              <span className="font-medium text-base">{pkg.name}</span>
+                              <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{pkg.sessions} sessions</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{pkg.duration} min</span>
+                                </div>
+                              </div>
                             </div>
-                            <span className="ml-6 font-bold text-green-600">${pkg.price}</span>
+                            <div className="flex items-center gap-1 font-bold text-green-600 text-lg ml-4">
+                              <DollarSign className="w-4 h-4" />
+                              <span>${pkg.price}</span>
+                            </div>
                           </div>
                         </SelectItem>
                       ))}
@@ -460,7 +481,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                             <div className="flex items-center gap-4">
                               <div className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
-                                <span>{session.time.substring(0, 5)}</span>
+                                <span>{formatTime12Hour(session.time.substring(0, 5))}</span>
                               </div>
                               {session.location && session.location !== 'TBD' && (
                                 <div className="flex items-center gap-1">
