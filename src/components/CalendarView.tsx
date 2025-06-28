@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -88,6 +87,10 @@ const CalendarView = () => {
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentDate(direction === 'next' ? addMonths(currentDate, 1) : subMonths(currentDate, 1));
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
   };
 
   const getSessionForTimeSlot = (date: Date, time: string) => {
@@ -244,6 +247,14 @@ const CalendarView = () => {
                   className="h-9 w-9 p-0"
                 >
                   <ChevronRight className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToToday}
+                  className="px-3"
+                >
+                  Today
                 </Button>
               </div>
               <div className="flex items-center gap-3">
