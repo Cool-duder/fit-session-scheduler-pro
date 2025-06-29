@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
+import { formatForDatabase, debugDate } from '@/lib/dateUtils'
 
 export type Session = {
   id: string
@@ -48,18 +49,11 @@ export const useSessions = () => {
   const addSession = async (sessionData: Omit<Session, 'id'>) => {
     try {
       console.log('Adding session to database:', sessionData)
+      debugDate('Original session date', sessionData.date);
       
-      // Ensure date is in the correct format (YYYY-MM-DD)
-      let formattedDate = sessionData.date;
-      if (sessionData.date) {
-        const dateObj = new Date(sessionData.date);
-        // Check if date is valid
-        if (isNaN(dateObj.getTime())) {
-          throw new Error('Invalid date provided');
-        }
-        // Format date as YYYY-MM-DD for database storage
-        formattedDate = dateObj.toISOString().split('T')[0];
-      }
+      // Format date properly for database storage
+      const formattedDate = formatForDatabase(sessionData.date);
+      debugDate('Formatted session date', formattedDate);
       
       // Ensure time is in the correct format (HH:MM:SS)
       let formattedTime = sessionData.time;
@@ -74,7 +68,7 @@ export const useSessions = () => {
         }
       }
       
-      console.log('Formatted date:', formattedDate, 'Formatted time:', formattedTime);
+      console.log('Final formatted date:', formattedDate, 'Final formatted time:', formattedTime);
       
       // First, get the current sessions_left for the client
       const { data: clientData, error: clientFetchError } = await supabase
@@ -152,11 +146,9 @@ export const useSessions = () => {
       
       // Format date if provided
       if (updates.date) {
-        const dateObj = new Date(updates.date);
-        if (isNaN(dateObj.getTime())) {
-          throw new Error('Invalid date provided');
-        }
-        updates.date = dateObj.toISOString().split('T')[0];
+        debugDate('Original update date', updates.date);
+        updates.date = formatForDatabase(updates.date);
+        debugDate('Formatted update date', updates.date);
       }
       
       // Format time if provided
@@ -169,7 +161,7 @@ export const useSessions = () => {
         }
       }
       
-      console.log('Formatted updates:', updates);
+      console.log('Final formatted updates:', updates);
       
       // Remove price from updates since it doesn't exist in the sessions table
       const { price, ...sessionUpdates } = updates;

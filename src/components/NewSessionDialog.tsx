@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Calendar, Clock, User, MapPin } from "lucide-react";
 import { useClients } from "@/hooks/useClients";
 import { usePackages } from "@/hooks/usePackages";
+import { formatForDatabase, debugDate } from "@/lib/dateUtils";
 
 interface NewSessionDialogProps {
   onAddSession: (session: {
@@ -114,53 +114,43 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
       return;
     }
 
-    // Ensure date is properly formatted as YYYY-MM-DD
-    let formattedDate = formData.date;
-    console.log('Original date input:', formData.date);
+    console.log('=== NEW SESSION SUBMISSION ===');
+    debugDate('Form date input', formData.date);
     
-    // If the date input is already in YYYY-MM-DD format, use it directly
-    if (/^\d{4}-\d{2}-\d{2}$/.test(formData.date)) {
-      formattedDate = formData.date;
-    } else {
-      // Try to parse and format the date
-      const dateObj = new Date(formData.date);
-      if (isNaN(dateObj.getTime())) {
-        console.error('Invalid date:', formData.date);
-        return;
-      }
-      // Format as YYYY-MM-DD
-      formattedDate = dateObj.getFullYear() + '-' + 
-                     String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + 
-                     String(dateObj.getDate()).padStart(2, '0');
+    try {
+      // Use the new date utility to format the date properly
+      const formattedDate = formatForDatabase(formData.date);
+      debugDate('Final formatted date', formattedDate);
+      
+      console.log('Submitting session with data:', {
+        ...formData,
+        date: formattedDate
+      });
+      
+      onAddSession({
+        client_id: formData.client_id,
+        client_name: formData.client_name,
+        date: formattedDate,
+        time: formData.time,
+        duration: formData.duration,
+        package: formData.package,
+        location: formData.location
+      });
+      
+      setFormData({
+        client_id: "",
+        client_name: "",
+        date: "",
+        time: "",
+        duration: 60,
+        package: "",
+        location: ""
+      });
+      setOpen(false);
+    } catch (error) {
+      console.error('Error formatting date for submission:', error);
+      return;
     }
-
-    console.log('Formatted date for submission:', formattedDate);
-    console.log('Time for submission:', formData.time);
-    console.log('Full form data being submitted:', {
-      ...formData,
-      date: formattedDate
-    });
-    
-    onAddSession({
-      client_id: formData.client_id,
-      client_name: formData.client_name,
-      date: formattedDate,
-      time: formData.time,
-      duration: formData.duration,
-      package: formData.package,
-      location: formData.location
-    });
-    
-    setFormData({
-      client_id: "",
-      client_name: "",
-      date: "",
-      time: "",
-      duration: 60,
-      package: "",
-      location: ""
-    });
-    setOpen(false);
   };
 
   return (
@@ -226,6 +216,7 @@ const NewSessionDialog = ({ onAddSession }: NewSessionDialogProps) => {
                 value={formData.date}
                 onChange={(e) => {
                   console.log('Date input changed to:', e.target.value);
+                  debugDate('Date input change', e.target.value);
                   setFormData({...formData, date: e.target.value});
                 }}
                 className="h-11"

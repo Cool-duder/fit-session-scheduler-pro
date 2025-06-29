@@ -5,12 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChevronLeft, ChevronRight, Clock, MapPin, Download, ArrowLeft } from "lucide-react";
-import { format, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, subMonths, eachDayOfInterval, isSameMonth, parseISO } from "date-fns";
+import { format, addDays, startOfWeek, endOfWeek, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, subMonths, eachDayOfInterval, isSameMonth } from "date-fns";
 import NewSessionDialog from "./NewSessionDialog";
 import SessionDialog from "./SessionDialog";
 import { useSessions, Session } from "@/hooks/useSessions";
 import { useClients } from "@/hooks/useClients";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { isSameDaySafe, getToday, debugDate } from "@/lib/dateUtils";
 
 const CalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -33,6 +34,7 @@ const CalendarView = () => {
     location?: string;
   }) => {
     console.log('Adding new session:', newSession);
+    debugDate('New session date', newSession.date);
     await addSession({
       ...newSession,
       status: 'confirmed',
@@ -124,23 +126,26 @@ const CalendarView = () => {
     }
   };
 
-  // Get today's appointments - Fixed date parsing
+  // Get today's appointments - Fixed with new date utilities
   const getTodaysAppointments = () => {
-    const today = new Date();
-    console.log('Today date:', today);
+    const today = getToday();
+    console.log('=== GETTING TODAYS APPOINTMENTS ===');
+    debugDate('Today', today);
     
     return sessions
       .filter(session => {
-        // Parse the session date properly
-        const sessionDate = parseISO(session.date);
-        console.log(`Comparing session date: ${session.date} (parsed: ${sessionDate}) with today: ${today} for session:`, session);
-        return isSameDay(sessionDate, today);
+        debugDate('Checking session', session.date);
+        const isSame = isSameDaySafe(session.date, today);
+        console.log(`Session ${session.id} (${session.client_name}) is today: ${isSame}`);
+        return isSame;
       })
       .sort((a, b) => a.time.localeCompare(b.time));
   };
 
   const getSessionForTimeSlot = (date: Date, time: string) => {
-    console.log(`Looking for session on ${format(date, 'yyyy-MM-dd')} at ${time}`);
+    console.log(`=== LOOKING FOR SESSION ===`);
+    debugDate('Target date', date);
+    console.log(`Target time: ${time}`);
     
     // Convert display time (like "5:00 AM") back to 24-hour format for comparison
     const convertDisplayTimeTo24Hour = (displayTime: string) => {
@@ -162,16 +167,15 @@ const CalendarView = () => {
     console.log(`Converted ${time} to ${targetTime24}`);
     
     const session = sessions.find(session => {
-      // Parse the session date properly using parseISO
-      const sessionDate = parseISO(session.date);
+      debugDate('Checking session date', session.date);
       
       // Convert database time format (HH:MM:SS) to comparison format (HH:MM)
       const sessionTime = session.time.substring(0, 5); // Extract HH:MM from HH:MM:SS
       
-      const isDateMatch = isSameDay(sessionDate, date);
+      const isDateMatch = isSameDaySafe(session.date, date);
       const isTimeMatch = sessionTime === targetTime24;
       
-      console.log(`Session ${session.id}: Date ${format(sessionDate, 'yyyy-MM-dd')} vs ${format(date, 'yyyy-MM-dd')} (${isDateMatch}), Time ${sessionTime} vs ${targetTime24} (${isTimeMatch})`);
+      console.log(`Session ${session.id}: Date match=${isDateMatch}, Time ${sessionTime} vs ${targetTime24} (${isTimeMatch})`);
       
       return isDateMatch && isTimeMatch;
     });
@@ -184,14 +188,13 @@ const CalendarView = () => {
   };
 
   const getSessionsForDay = (date: Date) => {
-    console.log(`Getting sessions for day: ${format(date, 'yyyy-MM-dd')}`);
+    console.log(`=== GETTING SESSIONS FOR DAY ===`);
+    debugDate('Target day', date);
     
     const daySessions = sessions.filter(session => {
-      // Parse the session date properly using parseISO
-      const sessionDate = parseISO(session.date);
-      
-      const isMatch = isSameDay(sessionDate, date);
-      console.log(`Session ${session.id}: ${format(sessionDate, 'yyyy-MM-dd')} vs ${format(date, 'yyyy-MM-dd')} = ${isMatch}`);
+      debugDate('Checking session', session.date);
+      const isMatch = isSameDaySafe(session.date, date);
+      console.log(`Session ${session.id} matches day: ${isMatch}`);
       return isMatch;
     });
     
@@ -506,7 +509,7 @@ const CalendarView = () => {
                   <div key={day.toISOString()} className="p-4 text-center border-r border-gray-200 last:border-r-0">
                     <div className="font-semibold text-gray-900">{format(day, 'EEE')}</div>
                     <div className={`text-sm mt-1 w-6 h-6 mx-auto rounded-full flex items-center justify-center ${
-                      isSameDay(day, new Date()) 
+                      isSameDaySafe(day, new Date()) 
                         ? 'bg-blue-600 text-white font-bold' 
                         : 'text-gray-600'
                     }`}>
@@ -590,7 +593,7 @@ const CalendarView = () => {
                 {monthDays.map((day) => {
                   const daySessions = getSessionsForDay(day);
                   const isCurrentMonth = isSameMonth(day, currentDate);
-                  const isToday = isSameDay(day, new Date());
+                  const isToday = isSameDaySafe(day, new Date());
                   
                   return (
                     <div 

@@ -14,6 +14,7 @@ import { usePackages } from "@/hooks/usePackages";
 import { format } from "date-fns";
 import PaymentTypeSelect from "./PaymentTypeSelect";
 import PaymentStatusBadge from "./PaymentStatusBadge";
+import { safeParseDateString, formatForDisplay, debugDate } from "@/lib/dateUtils";
 
 interface EditClientDialogProps {
   client: Client;
@@ -51,10 +52,28 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
 
   useEffect(() => {
     if (open) {
+      console.log('=== EDIT CLIENT DIALOG SESSIONS ===');
       const filteredSessions = sessions.filter(session => session.client_id === client.id);
-      const sortedSessions = filteredSessions.sort((a, b) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
+      console.log('Filtered sessions:', filteredSessions);
+      
+      // Sort sessions by date (newest first) with proper date parsing
+      const sortedSessions = filteredSessions.sort((a, b) => {
+        try {
+          debugDate('Session A date', a.date);
+          debugDate('Session B date', b.date);
+          
+          const dateA = safeParseDateString(a.date);
+          const dateB = safeParseDateString(b.date);
+          
+          console.log('Comparing dates:', dateA, 'vs', dateB);
+          return dateB.getTime() - dateA.getTime();
+        } catch (error) {
+          console.error('Error sorting sessions by date:', error);
+          return 0;
+        }
+      });
+      
+      console.log('Sorted sessions:', sortedSessions);
       setClientSessions(sortedSessions);
       
       // Check if current price matches any package price
@@ -123,6 +142,17 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const hour12 = hour % 12 || 12;
     return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  // Helper function to safely format session dates
+  const formatSessionDate = (dateString: string) => {
+    try {
+      debugDate('Formatting session date', dateString);
+      return formatForDisplay(dateString, 'MMM d, yyyy');
+    } catch (error) {
+      console.error('Error formatting session date:', error);
+      return 'Invalid Date';
+    }
   };
 
   return (
@@ -466,7 +496,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                               )}
                             </div>
                             <div className="text-sm font-medium text-gray-600">
-                              {format(new Date(session.date), 'MMM d, yyyy')}
+                              {formatSessionDate(session.date)}
                             </div>
                           </div>
                           

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,8 +19,9 @@ import { useClients } from "@/hooks/useClients";
 import { useSessions } from "@/hooks/useSessions";
 import { usePayments } from "@/hooks/usePayments";
 import AddClientDialog from "./AddClientDialog";
-import { format, parseISO, isSameDay } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { isSameDaySafe, getToday, debugDate } from "@/lib/dateUtils";
 
 interface DashboardOverviewProps {
   onNavigate: (tab: string) => void;
@@ -47,13 +47,16 @@ const DashboardOverview = ({ onNavigate }: DashboardOverviewProps) => {
     addClient(newClient);
   };
 
-  // Get today's sessions - Fixed date parsing
+  // Get today's sessions - Fixed with new date utilities
   const todaySessions = sessions.filter(session => {
-    // Parse the session date properly using parseISO
-    const sessionDate = parseISO(session.date);
-    const today = new Date();
-    console.log(`Dashboard: Comparing session date: ${session.date} (parsed: ${sessionDate}) with today: ${today} for session:`, session);
-    return isSameDay(sessionDate, today);
+    console.log('=== DASHBOARD TODAY SESSIONS ===');
+    debugDate('Session date', session.date);
+    const today = getToday();
+    debugDate('Today', today);
+    
+    const isSame = isSameDaySafe(session.date, today);
+    console.log(`Dashboard: Session ${session.id} (${session.client_name}) is today: ${isSame}`);
+    return isSame;
   });
 
   // Calculate total revenue from both payments and client packages
