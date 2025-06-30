@@ -32,7 +32,14 @@ export const usePackagePurchases = () => {
         .order('purchase_date', { ascending: false });
 
       if (error) throw error;
-      setPurchases(data || []);
+      
+      // Type cast the data to ensure payment_status is properly typed
+      const typedData = (data || []).map(item => ({
+        ...item,
+        payment_status: item.payment_status as 'pending' | 'completed' | 'failed'
+      }));
+      
+      setPurchases(typedData);
     } catch (error) {
       console.error('Error fetching package purchases:', error);
       toast({
@@ -65,13 +72,18 @@ export const usePackagePurchases = () => {
 
       if (error) throw error;
 
-      setPurchases(prev => [data, ...prev]);
+      const typedData = {
+        ...data,
+        payment_status: data.payment_status as 'pending' | 'completed' | 'failed'
+      };
+
+      setPurchases(prev => [typedData, ...prev]);
       toast({
         title: "Success",
         description: "Package purchase recorded successfully",
       });
       
-      return data;
+      return typedData;
     } catch (error) {
       console.error('Error adding package purchase:', error);
       toast({
@@ -94,8 +106,13 @@ export const usePackagePurchases = () => {
 
       if (error) throw error;
 
+      const typedData = {
+        ...data,
+        payment_status: data.payment_status as 'pending' | 'completed' | 'failed'
+      };
+
       setPurchases(prev => prev.map(purchase => 
-        purchase.id === purchaseId ? data : purchase
+        purchase.id === purchaseId ? typedData : purchase
       ));
 
       toast({

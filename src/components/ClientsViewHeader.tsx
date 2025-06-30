@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Upload } from "lucide-react";
 import AddClientDialog from "./AddClientDialog";
-import ImportClientsDialog from "./ImportClientsDialog";
 import PackageManagementDialog from "./PackageManagementDialog";
 import PackagePurchaseManagement from "./PackagePurchaseManagement";
 import { Client } from "@/hooks/useClients";
@@ -39,19 +38,12 @@ const ClientsViewHeader = ({
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
-        <AddClientDialog onAddClient={onAddClient}>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Client
-          </Button>
-        </AddClientDialog>
+        <AddClientDialog onAddClient={onAddClient} />
 
-        <ImportClientsDialog onImportSuccess={onImportSuccess}>
-          <Button variant="outline">
-            <Upload className="w-4 h-4 mr-2" />
-            Import Clients
-          </Button>
-        </ImportClientsDialog>
+        <Button variant="outline">
+          <Upload className="w-4 h-4 mr-2" />
+          Import Clients
+        </Button>
 
         <PackageManagementDialog />
         
