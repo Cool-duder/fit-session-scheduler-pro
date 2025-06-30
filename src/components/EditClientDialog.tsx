@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,26 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   
   const { sessions } = useSessions();
   const [clientSessions, setClientSessions] = useState<Session[]>([]);
+
+  // Helper function to extract sessions from package string
+  const getSessionsFromPackage = (packageStr: string) => {
+    const match = packageStr.match(/(\d+)x/);
+    return match ? parseInt(match[1]) : 10;
+  };
+
+  // Calculate dynamic session counts based on selected package
+  const selectedPackage = packages.find(pkg => pkg.name === formData.package);
+  const dynamicTotalSessions = selectedPackage ? selectedPackage.sessions : getSessionsFromPackage(formData.package);
+  
+  // Calculate how many sessions have been used from the current client's package
+  const completedSessions = clientSessions.filter(session => 
+    session.status === 'completed' || new Date(session.date) < new Date()
+  ).length;
+  
+  // If the package hasn't changed, use the actual client data
+  // If the package has changed, calculate what the new values would be
+  const displayTotalSessions = formData.package === client.package ? client.total_sessions : dynamicTotalSessions;
+  const displaySessionsLeft = formData.package === client.package ? client.sessions_left : Math.max(0, dynamicTotalSessions - completedSessions);
 
   useEffect(() => {
     if (open) {
@@ -128,12 +149,6 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
       setOpen(false);
     }
   };
-
-  const completedSessions = clientSessions.filter(session => 
-    session.status === 'completed' || new Date(session.date) < new Date()
-  ).length;
-
-  const selectedPackage = packages.find(pkg => pkg.name === formData.package);
 
   // Helper function to format time from 24-hour to 12-hour format
   const formatTime12Hour = (time24: string) => {
@@ -439,12 +454,18 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                 
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                    <div className="text-2xl font-bold text-green-600">{client.sessions_left}</div>
+                    <div className="text-2xl font-bold text-green-600">{displaySessionsLeft}</div>
                     <div className="text-xs text-green-700 font-medium">Sessions Left</div>
+                    {formData.package !== client.package && (
+                      <div className="text-xs text-orange-500 mt-1">*Preview</div>
+                    )}
                   </div>
                   <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="text-2xl font-bold text-blue-600">{client.total_sessions}</div>
+                    <div className="text-2xl font-bold text-blue-600">{displayTotalSessions}</div>
                     <div className="text-xs text-blue-700 font-medium">Total Sessions</div>
+                    {formData.package !== client.package && (
+                      <div className="text-xs text-orange-500 mt-1">*Preview</div>
+                    )}
                   </div>
                 </div>
                 
@@ -457,12 +478,15 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                     <div 
                       className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500 shadow-sm" 
                       style={{ 
-                        width: `${((client.total_sessions - client.sessions_left) / client.total_sessions) * 100}%` 
+                        width: `${((displayTotalSessions - displaySessionsLeft) / displayTotalSessions) * 100}%` 
                       }}
                     ></div>
                   </div>
                   <p className="text-xs text-gray-500 mt-2 text-center">
-                    {Math.round(((client.total_sessions - client.sessions_left) / client.total_sessions) * 100)}% Complete
+                    {Math.round(((displayTotalSessions - displaySessionsLeft) / displayTotalSessions) * 100)}% Complete
+                    {formData.package !== client.package && (
+                      <span className="text-orange-500"> (Preview)</span>
+                    )}
                   </p>
                 </div>
               </div>
