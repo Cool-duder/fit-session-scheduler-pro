@@ -63,6 +63,59 @@ export type Database = {
         }
         Relationships: []
       }
+      package_purchases: {
+        Row: {
+          amount: number
+          client_id: string
+          client_name: string
+          created_at: string
+          id: string
+          notes: string | null
+          package_name: string
+          package_sessions: number
+          payment_status: string
+          payment_type: string
+          purchase_date: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          client_name: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          package_name: string
+          package_sessions: number
+          payment_status?: string
+          payment_type?: string
+          purchase_date?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          client_name?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          package_name?: string
+          package_sessions?: number
+          payment_status?: string
+          payment_type?: string
+          purchase_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_purchases_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number

@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
-import { addWeeks, format, parse, isValid } from 'date-fns'
+import { supabase } from '@/integrations/supabase/client'
+import { usePackages } from '@/hooks/usePackages'
 
 export type Client = {
   id: string
@@ -10,14 +10,15 @@ export type Client = {
   email: string
   phone: string
   package: string
-  price?: number
   sessions_left: number
   total_sessions: number
   monthly_count: number
   regular_slot: string
+  join_date: string
+  created_at: string
+  price?: number
   location?: string
   payment_type?: string
-  join_date: string
   birthday?: string
 }
 
@@ -25,27 +26,23 @@ export const useClients = () => {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
-
-  // Helper function to extract sessions from package string
-  const getSessionsFromPackage = (packageStr: string) => {
-    const match = packageStr.match(/(\d+)x/);
-    return match ? parseInt(match[1]) : 10;
-  }
+  const { packages } = usePackages()
 
   const fetchClients = async () => {
     try {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .order('name')
+        .order('created_at', { ascending: false })
 
       if (error) throw error
+      
       setClients(data || [])
     } catch (error) {
       console.error('Error fetching clients:', error)
       toast({
         title: "Error",
-        description: "Failed to load clients",
+        description: "Failed to fetch clients",
         variant: "destructive",
       })
     } finally {
@@ -53,106 +50,77 @@ export const useClients = () => {
     }
   }
 
-  const createRecurringSessions = async (client: Client) => {
-    if (!client.regular_slot || client.regular_slot === 'TBD') return
-
-    try {
-      // Parse the regular slot (e.g., "Monday 09:00" or "Mon, Wed, Fri 9:00 AM")
-      const slots = client.regular_slot.split(',').map(slot => slot.trim())
-      const sessions = []
-      
-      for (const slot of slots) {
-        const parts = slot.split(' ')
-        if (parts.length < 2) continue
-        
-        const dayName = parts[0]
-        const timeStr = parts.slice(1).join(' ')
-        
-        // Convert day name to number (0 = Sunday, 1 = Monday, etc.)
-        const dayMap: { [key: string]: number } = {
-          'sunday': 0, 'sun': 0,
-          'monday': 1, 'mon': 1,
-          'tuesday': 2, 'tue': 2, 'tues': 2,
-          'wednesday': 3, 'wed': 3,
-          'thursday': 4, 'thu': 4, 'thurs': 4,
-          'friday': 5, 'fri': 5,
-          'saturday': 6, 'sat': 6
-        }
-        
-        const dayOfWeek = dayMap[dayName.toLowerCase()]
-        if (dayOfWeek === undefined) continue
-        
-        // Parse time (handle both 24h and 12h formats)
-        let time24h = timeStr
-        if (timeStr.includes('AM') || timeStr.includes('PM')) {
-          try {
-            const parsed = parse(timeStr, 'h:mm a', new Date())
-            if (isValid(parsed)) {
-              time24h = format(parsed, 'HH:mm')
-            }
-          } catch (e) {
-            console.warn('Could not parse time:', timeStr)
-            continue
-          }
-        }
-        
-        // Create 4 weeks of sessions starting from next occurrence of the day
-        const today = new Date()
-        const daysUntilNext = (dayOfWeek + 7 - today.getDay()) % 7 || 7
-        let nextDate = new Date(today)
-        nextDate.setDate(today.getDate() + daysUntilNext)
-        
-        // Create 4 sessions (1 month)
-        for (let week = 0; week < 4; week++) {
-          const sessionDate = addWeeks(nextDate, week)
-          sessions.push({
-            client_id: client.id,
-            client_name: client.name,
-            date: format(sessionDate, 'yyyy-MM-dd'),
-            time: time24h,
-            duration: client.package.includes('60MIN') ? 60 : 30,
-            package: client.package,
-            status: 'confirmed',
-            location: client.location || 'TBD'
-          })
-        }
+  // Helper function to get sessions count from package name
+  const getSessionsFromPackage = (packageName: string) => {
+    const packageData = packages.find(pkg => pkg.name === packageName)
+    if (packageData) {
+      return packageData.sessions
+    }
+    
+    // Fallback to regex parsing
+    const patterns = [
+      /^(\d+)x\s*PK/i,
+      /^(\d+)x\s*\(/i,
+      /^(\d+)x\s*/i
+    ]
+    
+    for (const pattern of patterns) {
+      const match = packageName.match(pattern)
+      if (match) {
+        return parseInt(match[1])
       }
-      
-      if (sessions.length > 0) {
+    }
+    
+    return 1
+  }
+
+  // Helper function to record package purchase
+  const recordPackagePurchase = async (clientData: any, isNewClient: boolean = false) => {
+    try {
+      const packageData = packages.find(pkg => pkg.name === clientData.package)
+      const packageSessions = getSessionsFromPackage(clientData.package)
+      const amount = clientData.price || (packageData?.price || 0)
+
+      // Only record if there's a meaningful amount
+      if (amount > 0) {
         const { error } = await supabase
-          .from('sessions')
-          .insert(sessions)
-        
-        if (error) throw error
-        
-        toast({
-          title: "Success",
-          description: `Created ${sessions.length} recurring sessions for ${client.name}`,
-        })
+          .from('package_purchases')
+          .insert([{
+            client_id: clientData.id,
+            client_name: clientData.name,
+            package_name: clientData.package,
+            package_sessions: packageSessions,
+            amount: amount,
+            purchase_date: new Date().toISOString().split('T')[0],
+            payment_type: clientData.payment_type || 'Cash',
+            payment_status: 'completed',
+            notes: isNewClient ? 'Initial package purchase' : 'Package change/upgrade'
+          }])
+
+        if (error) {
+          console.error('Error recording package purchase:', error)
+        } else {
+          console.log('Package purchase recorded successfully')
+        }
       }
     } catch (error) {
-      console.error('Error creating recurring sessions:', error)
-      toast({
-        title: "Warning",
-        description: "Client added but failed to create recurring sessions",
-        variant: "destructive",
-      })
+      console.error('Error in recordPackagePurchase:', error)
     }
   }
 
   const addClient = async (clientData: {
-    name: string;
-    email: string;
-    phone: string;
-    package: string;
-    price: number;
-    regularSlot: string;
-    location: string;
-    paymentType: string;
-    birthday?: string;
+    name: string
+    email: string
+    phone: string
+    package: string
+    price: number
+    regularSlot: string
+    location: string
+    paymentType: string
+    birthday?: string
   }) => {
     try {
-      const totalSessions = getSessionsFromPackage(clientData.package);
+      const sessions = getSessionsFromPackage(clientData.package)
       
       const newClientData = {
         name: clientData.name,
@@ -160,15 +128,14 @@ export const useClients = () => {
         phone: clientData.phone,
         package: clientData.package,
         price: clientData.price,
-        sessions_left: totalSessions,
-        total_sessions: totalSessions,
-        monthly_count: 0,
         regular_slot: clientData.regularSlot,
         location: clientData.location,
         payment_type: clientData.paymentType,
-        join_date: new Date().toISOString().split('T')[0],
-        birthday: clientData.birthday || null
-      };
+        birthday: clientData.birthday || null,
+        total_sessions: sessions,
+        sessions_left: sessions,
+        monthly_count: 0
+      }
 
       const { data, error } = await supabase
         .from('clients')
@@ -177,11 +144,11 @@ export const useClients = () => {
         .single()
 
       if (error) throw error
-      
-      setClients(prev => [...prev, data])
-      
-      // Create recurring sessions if regular slot is specified
-      await createRecurringSessions(data)
+
+      // Record the package purchase
+      await recordPackagePurchase({ ...data, id: data.id }, true)
+
+      setClients(prev => [data, ...prev])
       
       toast({
         title: "Success",
@@ -198,40 +165,65 @@ export const useClients = () => {
   }
 
   const editClient = async (clientId: string, updatedData: {
-    name: string;
-    email: string;
-    phone: string;
-    package: string;
-    price: number;
-    regularSlot: string;
-    location: string;
-    paymentType: string;
-    birthday?: string;
+    name: string
+    email: string
+    phone: string
+    package: string
+    price: number
+    regularSlot: string
+    location: string
+    paymentType: string
+    birthday?: string
   }) => {
     try {
+      // Get the current client data to check if package changed
+      const currentClient = clients.find(c => c.id === clientId)
+      const packageChanged = currentClient && currentClient.package !== updatedData.package
+      
+      let newSessionCounts = {}
+      
+      if (packageChanged) {
+        const newTotalSessions = getSessionsFromPackage(updatedData.package)
+        const completedSessions = currentClient ? currentClient.total_sessions - currentClient.sessions_left : 0
+        const newSessionsLeft = Math.max(0, newTotalSessions - completedSessions)
+        
+        newSessionCounts = {
+          total_sessions: newTotalSessions,
+          sessions_left: newSessionsLeft
+        }
+      }
+
+      const clientUpdateData = {
+        name: updatedData.name,
+        email: updatedData.email,
+        phone: updatedData.phone,
+        package: updatedData.package,
+        price: updatedData.price,
+        regular_slot: updatedData.regularSlot,
+        location: updatedData.location,
+        payment_type: updatedData.paymentType,
+        birthday: updatedData.birthday || null,
+        ...newSessionCounts
+      }
+
       const { data, error } = await supabase
         .from('clients')
-        .update({
-          name: updatedData.name,
-          email: updatedData.email,
-          phone: updatedData.phone,
-          package: updatedData.package,
-          price: updatedData.price,
-          regular_slot: updatedData.regularSlot,
-          location: updatedData.location,
-          payment_type: updatedData.paymentType,
-          birthday: updatedData.birthday || null
-        })
+        .update(clientUpdateData)
         .eq('id', clientId)
         .select()
         .single()
 
       if (error) throw error
-      
+
+      // Record package purchase if package changed
+      if (packageChanged) {
+        await recordPackagePurchase({ ...data, id: clientId }, false)
+      }
+
       setClients(prev => prev.map(client => 
         client.id === clientId ? data : client
       ))
-      
+
       toast({
         title: "Success",
         description: "Client updated successfully",
@@ -259,7 +251,7 @@ export const useClients = () => {
       
       toast({
         title: "Success",
-        description: `${clientName} has been deleted`,
+        description: `Client ${clientName} deleted successfully`,
       })
     } catch (error) {
       console.error('Error deleting client:', error)
@@ -275,5 +267,12 @@ export const useClients = () => {
     fetchClients()
   }, [])
 
-  return { clients, loading, addClient, editClient, deleteClient, refetch: fetchClients }
+  return {
+    clients,
+    loading,
+    addClient,
+    editClient,
+    deleteClient,
+    refetch: fetchClients
+  }
 }
