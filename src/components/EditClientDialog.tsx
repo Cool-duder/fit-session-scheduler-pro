@@ -46,24 +46,35 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   const { sessions } = useSessions();
   const [clientSessions, setClientSessions] = useState<Session[]>([]);
   
+  // Use the hook with current form data
   const sessionCounts = useEditClientSessionCounts(client, clientSessions, formData.package);
 
+  // Reset form data when dialog opens
   useEffect(() => {
     if (open) {
-      console.log('=== EDIT CLIENT DIALOG SESSIONS ===');
+      console.log('=== EDIT CLIENT DIALOG OPENED ===');
+      console.log('Client data:', client);
+      
+      setFormData({
+        name: client.name,
+        email: client.email,
+        phone: client.phone,
+        package: client.package,
+        price: client.price || 120,
+        regularSlot: client.regular_slot,
+        location: client.location || "",
+        paymentType: client.payment_type || "Cash",
+        birthday: client.birthday || ""
+      });
+      
+      // Filter and sort sessions
       const filteredSessions = sessions.filter(session => session.client_id === client.id);
       console.log('Filtered sessions:', filteredSessions);
       
-      // Sort sessions by date (newest first) with proper date parsing
       const sortedSessions = filteredSessions.sort((a, b) => {
         try {
-          debugDate('Session A date', a.date);
-          debugDate('Session B date', b.date);
-          
           const dateA = safeParseDateString(a.date);
           const dateB = safeParseDateString(b.date);
-          
-          console.log('Comparing dates:', dateA, 'vs', dateB);
           return dateB.getTime() - dateA.getTime();
         } catch (error) {
           console.error('Error sorting sessions by date:', error);
@@ -71,17 +82,21 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
         }
       });
       
-      console.log('Sorted sessions:', sortedSessions);
       setClientSessions(sortedSessions);
       
       // Check if current price matches any package price
       const matchingPackage = packages.find(pkg => pkg.name === client.package);
       setIsCustomPrice(matchingPackage ? matchingPackage.price !== client.price : true);
     }
-  }, [open, sessions, client.id, packages, client.package, client.price]);
+  }, [open, sessions, client, packages]);
 
   const handleFormDataChange = (field: string, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    console.log('Form data changing:', field, '=', value);
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      console.log('New form data:', newData);
+      return newData;
+    });
   };
 
   const handlePackageChange = (packageName: string) => {
@@ -106,10 +121,8 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   const handleCustomPriceToggle = () => {
     setIsCustomPrice(!isCustomPrice);
     if (!isCustomPrice) {
-      // When enabling custom price, keep current price
       return;
     } else {
-      // When disabling custom price, revert to package price
       const selectedPackage = packages.find(pkg => pkg.name === formData.package);
       if (selectedPackage) {
         setFormData(prev => ({

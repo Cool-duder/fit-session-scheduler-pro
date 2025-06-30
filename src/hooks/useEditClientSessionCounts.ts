@@ -24,16 +24,18 @@ export const useEditClientSessionCounts = (
     isPreview: false
   });
 
-  // Helper function to extract sessions from package string
+  // Helper function to get sessions from package
   const getSessionsFromPackage = (packageStr: string) => {
     console.log('Getting sessions for package:', packageStr);
+    
+    // First try to find exact match in packages
     const selectedPkg = packages.find(pkg => pkg.name === packageStr);
     if (selectedPkg) {
       console.log('Found matching package:', selectedPkg);
       return selectedPkg.sessions;
     }
     
-    // Enhanced regex to handle different package naming patterns
+    // Enhanced regex patterns for package parsing
     const patterns = [
       /^(\d+)x\s*PK/i,  // Matches "5x PK 30MIN", "10x PK 60MIN", etc.
       /^(\d+)x\s*\(/i,   // Matches "1x (30MIN)", "1x (60MIN)", etc.
@@ -49,27 +51,34 @@ export const useEditClientSessionCounts = (
       }
     }
     
-    console.log('No match found, defaulting to 10 sessions');
-    return 10; // Default fallback
+    console.log('No match found, defaulting to 1 session');
+    return 1; // Default fallback
   };
 
   useEffect(() => {
-    const packageChanged = selectedPackage !== client.package;
+    console.log('=== SESSION COUNTS UPDATE ===');
+    console.log('Client package:', client.package);
+    console.log('Selected package:', selectedPackage);
+    console.log('Client sessions:', clientSessions);
     
-    // Calculate how many sessions have been completed
+    // Calculate completed sessions
     const completedSessions = clientSessions.filter(session => 
       session.status === 'completed' || new Date(session.date) < new Date()
     ).length;
     
+    console.log('Completed sessions:', completedSessions);
+    
+    // Check if package has changed
+    const packageChanged = selectedPackage !== client.package;
+    console.log('Package changed:', packageChanged);
+    
     if (packageChanged) {
-      // Package has changed - show preview calculations
+      // Package has changed - calculate new values
       const newTotalSessions = getSessionsFromPackage(selectedPackage);
       const newSessionsLeft = Math.max(0, newTotalSessions - completedSessions);
       
-      console.log('=== PACKAGE CHANGED - PREVIEW MODE ===');
-      console.log('New package:', selectedPackage);
+      console.log('=== PACKAGE CHANGED - NEW CALCULATIONS ===');
       console.log('New total sessions:', newTotalSessions);
-      console.log('Completed sessions:', completedSessions);
       console.log('New sessions left:', newSessionsLeft);
       
       setSessionCounts({
@@ -79,11 +88,10 @@ export const useEditClientSessionCounts = (
         isPreview: true
       });
     } else {
-      // Package hasn't changed - show original client data
+      // Package hasn't changed - use original client data
       console.log('=== PACKAGE UNCHANGED - ORIGINAL DATA ===');
       console.log('Original total sessions:', client.total_sessions);
       console.log('Original sessions left:', client.sessions_left);
-      console.log('Completed sessions:', completedSessions);
       
       setSessionCounts({
         totalSessions: client.total_sessions,
