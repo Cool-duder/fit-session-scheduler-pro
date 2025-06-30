@@ -109,7 +109,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
         totalSessions: newTotalSessions,
         sessionsLeft: newSessionsLeft,
         completedSessions: completedSessions,
-        isPreview: false
+        isPreview: true
       });
     } else {
       // Package hasn't changed - show original client data
