@@ -58,12 +58,31 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
 
   // Helper function to extract sessions from package string
   const getSessionsFromPackage = (packageStr: string) => {
+    console.log('Getting sessions for package:', packageStr);
     const selectedPackage = packages.find(pkg => pkg.name === packageStr);
     if (selectedPackage) {
+      console.log('Found matching package:', selectedPackage);
       return selectedPackage.sessions;
     }
-    const match = packageStr.match(/(\d+)x/);
-    return match ? parseInt(match[1]) : 10;
+    
+    // Enhanced regex to handle different package naming patterns
+    const patterns = [
+      /^(\d+)x\s*PK/i,  // Matches "5x PK 30MIN", "10x PK 60MIN", etc.
+      /^(\d+)x\s*\(/i,   // Matches "1x (30MIN)", "1x (60MIN)", etc.
+      /^(\d+)x\s*/i      // Matches "10x 30MIN Basic", etc.
+    ];
+    
+    for (const pattern of patterns) {
+      const match = packageStr.match(pattern);
+      if (match) {
+        const sessions = parseInt(match[1]);
+        console.log('Extracted sessions from regex:', sessions);
+        return sessions;
+      }
+    }
+    
+    console.log('No match found, defaulting to 10 sessions');
+    return 10; // Default fallback
   };
 
   // Calculate session counts whenever package or sessions change
