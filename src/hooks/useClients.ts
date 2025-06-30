@@ -150,7 +150,7 @@ export const useClients = () => {
 
       // Insert new client in alphabetical order
       setClients(prev => {
-        const updated = [data, ...prev]
+        const updated = [...prev, data]
         return updated.sort((a, b) => a.name.localeCompare(b.name))
       })
       
