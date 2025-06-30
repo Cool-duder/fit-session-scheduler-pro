@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
@@ -48,18 +49,28 @@ export const useClients = () => {
           const completedSessions = client.total_sessions - client.sessions_left
           const newSessionsLeft = Math.max(0, correctSessions - completedSessions)
           
-          // Update the database with correct values
-          supabase
-            .from('clients')
-            .update({
-              total_sessions: correctSessions,
-              sessions_left: newSessionsLeft
-            })
-            .eq('id', client.id)
-            .then(() => {
-              console.log(`Updated ${client.name} session counts: total=${correctSessions}, left=${newSessionsLeft}`)
-            })
-            .catch(err => console.error('Error updating session counts:', err))
+          // Update the database with correct values (fire and forget)
+          const updateSessionCounts = async () => {
+            try {
+              const { error } = await supabase
+                .from('clients')
+                .update({
+                  total_sessions: correctSessions,
+                  sessions_left: newSessionsLeft
+                })
+                .eq('id', client.id)
+              
+              if (error) {
+                console.error('Error updating session counts:', error)
+              } else {
+                console.log(`Updated ${client.name} session counts: total=${correctSessions}, left=${newSessionsLeft}`)
+              }
+            } catch (err) {
+              console.error('Error updating session counts:', err)
+            }
+          }
+          
+          updateSessionCounts()
           
           return {
             ...client,
