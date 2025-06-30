@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -71,6 +70,17 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   const displayTotalSessions = formData.package === client.package ? client.total_sessions : dynamicTotalSessions;
   const displaySessionsLeft = formData.package === client.package ? client.sessions_left : Math.max(0, dynamicTotalSessions - completedSessions);
 
+  // Debug logging
+  console.log('=== EDIT CLIENT DIALOG DEBUG ===');
+  console.log('Current package:', formData.package);
+  console.log('Original package:', client.package);
+  console.log('Selected package object:', selectedPackage);
+  console.log('Dynamic total sessions:', dynamicTotalSessions);
+  console.log('Completed sessions:', completedSessions);
+  console.log('Display total sessions:', displayTotalSessions);
+  console.log('Display sessions left:', displaySessionsLeft);
+  console.log('Package changed:', formData.package !== client.package);
+
   useEffect(() => {
     if (open) {
       console.log('=== EDIT CLIENT DIALOG SESSIONS ===');
@@ -104,7 +114,10 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   }, [open, sessions, client.id, packages, client.package, client.price]);
 
   const handlePackageChange = (packageName: string) => {
+    console.log('Package changed to:', packageName);
     const selectedPackage = packages.find(pkg => pkg.name === packageName);
+    console.log('Selected package details:', selectedPackage);
+    
     if (selectedPackage && !isCustomPrice) {
       setFormData(prev => ({
         ...prev,
