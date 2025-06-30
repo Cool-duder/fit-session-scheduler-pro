@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
@@ -37,7 +36,42 @@ export const useClients = () => {
 
       if (error) throw error
       
-      setClients(data || [])
+      // Fix any data inconsistencies with session counts
+      const correctedData = (data || []).map(client => {
+        const correctSessions = getSessionsFromPackage(client.package)
+        
+        // If the total_sessions doesn't match the package, fix it
+        if (client.total_sessions !== correctSessions) {
+          console.log(`Fixing session count for ${client.name}: package ${client.package} should have ${correctSessions} sessions, but DB shows ${client.total_sessions}`)
+          
+          // Calculate how many sessions were already completed
+          const completedSessions = client.total_sessions - client.sessions_left
+          const newSessionsLeft = Math.max(0, correctSessions - completedSessions)
+          
+          // Update the database with correct values
+          supabase
+            .from('clients')
+            .update({
+              total_sessions: correctSessions,
+              sessions_left: newSessionsLeft
+            })
+            .eq('id', client.id)
+            .then(() => {
+              console.log(`Updated ${client.name} session counts: total=${correctSessions}, left=${newSessionsLeft}`)
+            })
+            .catch(err => console.error('Error updating session counts:', err))
+          
+          return {
+            ...client,
+            total_sessions: correctSessions,
+            sessions_left: newSessionsLeft
+          }
+        }
+        
+        return client
+      })
+      
+      setClients(correctedData)
     } catch (error) {
       console.error('Error fetching clients:', error)
       toast({
