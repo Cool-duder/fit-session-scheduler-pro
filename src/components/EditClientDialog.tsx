@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -52,7 +53,8 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   const [sessionCounts, setSessionCounts] = useState({
     totalSessions: client.total_sessions,
     sessionsLeft: client.sessions_left,
-    completedSessions: 0
+    completedSessions: 0,
+    isPreview: false
   });
 
   // Helper function to extract sessions from package string
@@ -64,34 +66,46 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   // Calculate session counts whenever package or sessions change
   useEffect(() => {
     const selectedPackage = packages.find(pkg => pkg.name === formData.package);
-    const dynamicTotalSessions = selectedPackage ? selectedPackage.sessions : getSessionsFromPackage(formData.package);
+    const packageChanged = formData.package !== client.package;
     
-    // Calculate how many sessions have been used from the current client's package
+    // Calculate how many sessions have been completed
     const completedSessions = clientSessions.filter(session => 
       session.status === 'completed' || new Date(session.date) < new Date()
     ).length;
     
-    // If the package hasn't changed, use the actual client data
-    // If the package has changed, calculate what the new values would be
-    const displayTotalSessions = formData.package === client.package ? client.total_sessions : dynamicTotalSessions;
-    const displaySessionsLeft = formData.package === client.package ? client.sessions_left : Math.max(0, dynamicTotalSessions - completedSessions);
-
-    setSessionCounts({
-      totalSessions: displayTotalSessions,
-      sessionsLeft: displaySessionsLeft,
-      completedSessions: completedSessions
-    });
+    if (packageChanged) {
+      // Package has changed - show preview calculations
+      const newTotalSessions = selectedPackage ? selectedPackage.sessions : getSessionsFromPackage(formData.package);
+      const newSessionsLeft = Math.max(0, newTotalSessions - completedSessions);
+      
+      setSessionCounts({
+        totalSessions: newTotalSessions,
+        sessionsLeft: newSessionsLeft,
+        completedSessions: completedSessions,
+        isPreview: true
+      });
+    } else {
+      // Package hasn't changed - show original client data
+      setSessionCounts({
+        totalSessions: client.total_sessions,
+        sessionsLeft: client.sessions_left,
+        completedSessions: completedSessions,
+        isPreview: false
+      });
+    }
 
     // Debug logging
     console.log('=== SESSION COUNTS UPDATE ===');
     console.log('Current package:', formData.package);
     console.log('Original package:', client.package);
+    console.log('Package changed:', packageChanged);
     console.log('Selected package object:', selectedPackage);
-    console.log('Dynamic total sessions:', dynamicTotalSessions);
     console.log('Completed sessions:', completedSessions);
-    console.log('Display total sessions:', displayTotalSessions);
-    console.log('Display sessions left:', displaySessionsLeft);
-    console.log('Package changed:', formData.package !== client.package);
+    console.log('Final session counts:', {
+      totalSessions: packageChanged ? (selectedPackage ? selectedPackage.sessions : getSessionsFromPackage(formData.package)) : client.total_sessions,
+      sessionsLeft: packageChanged ? Math.max(0, (selectedPackage ? selectedPackage.sessions : getSessionsFromPackage(formData.package)) - completedSessions) : client.sessions_left,
+      isPreview: packageChanged
+    });
   }, [formData.package, clientSessions, packages, client.package, client.total_sessions, client.sessions_left]);
 
   useEffect(() => {
@@ -484,14 +498,14 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                   <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
                     <div className="text-2xl font-bold text-green-600">{sessionCounts.sessionsLeft}</div>
                     <div className="text-xs text-green-700 font-medium">Sessions Left</div>
-                    {formData.package !== client.package && (
+                    {sessionCounts.isPreview && (
                       <div className="text-xs text-orange-500 mt-1">*Preview</div>
                     )}
                   </div>
                   <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <div className="text-2xl font-bold text-blue-600">{sessionCounts.totalSessions}</div>
                     <div className="text-xs text-blue-700 font-medium">Total Sessions</div>
-                    {formData.package !== client.package && (
+                    {sessionCounts.isPreview && (
                       <div className="text-xs text-orange-500 mt-1">*Preview</div>
                     )}
                   </div>
@@ -512,7 +526,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                   </div>
                   <p className="text-xs text-gray-500 mt-2 text-center">
                     {Math.round(((sessionCounts.totalSessions - sessionCounts.sessionsLeft) / sessionCounts.totalSessions) * 100)}% Complete
-                    {formData.package !== client.package && (
+                    {sessionCounts.isPreview && (
                       <span className="text-orange-500"> (Preview)</span>
                     )}
                   </p>
