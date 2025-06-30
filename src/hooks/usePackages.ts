@@ -6,9 +6,9 @@ export type Package = {
   id: string
   name: string
   sessions: number
-  duration: number // in minutes (30 or 60)
+  duration: number // in minutes (30, 45, or 60)
   price: number
-  type: '30MIN' | '60MIN'
+  type: '30MIN' | '45MIN' | '60MIN'
 }
 
 export const usePackages = () => {
@@ -18,7 +18,8 @@ export const usePackages = () => {
     { id: '3', name: '10x PK 30MIN', sessions: 10, duration: 30, price: 800, type: '30MIN' },
     { id: '4', name: '1x (60MIN)', sessions: 1, duration: 60, price: 120, type: '60MIN' },
     { id: '5', name: '5x PK 60MIN', sessions: 5, duration: 60, price: 600, type: '60MIN' },
-    { id: '6', name: '10x PK 60MIN', sessions: 10, duration: 60, price: 1200, type: '60MIN' }
+    { id: '6', name: '10x PK 60MIN', sessions: 10, duration: 60, price: 1200, type: '60MIN' },
+    { id: '7', name: '10x PK (45MIN)', sessions: 10, duration: 45, price: 1250, type: '45MIN' }
   ])
   const { toast } = useToast()
 
@@ -34,7 +35,7 @@ export const usePackages = () => {
       sessions: packageData.sessions,
       duration: packageData.duration,
       price: packageData.price,
-      type: packageData.duration === 30 ? '30MIN' : '60MIN'
+      type: packageData.duration === 30 ? '30MIN' : packageData.duration === 45 ? '45MIN' : '60MIN'
     }
     
     setPackages(prev => [...prev, newPackage])
@@ -55,7 +56,7 @@ export const usePackages = () => {
         ? { 
             ...pkg, 
             ...updatedData, 
-            type: updatedData.duration === 30 ? '30MIN' : '60MIN' 
+            type: updatedData.duration === 30 ? '30MIN' : updatedData.duration === 45 ? '45MIN' : '60MIN'
           }
         : pkg
     ))
