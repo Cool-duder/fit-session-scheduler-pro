@@ -90,7 +90,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
         totalSessions: newTotalSessions,
         sessionsLeft: newSessionsLeft,
         completedSessions: completedSessions,
-        isPreview: true
+        isPreview: false
       });
     } else {
       // Package hasn't changed - show original client data
@@ -498,16 +498,10 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                   <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
                     <div className="text-2xl font-bold text-green-600">{sessionCounts.sessionsLeft}</div>
                     <div className="text-xs text-green-700 font-medium">Sessions Left</div>
-                    {sessionCounts.isPreview && (
-                      <div className="text-xs text-orange-500 mt-1">*Preview</div>
-                    )}
                   </div>
                   <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <div className="text-2xl font-bold text-blue-600">{sessionCounts.totalSessions}</div>
                     <div className="text-xs text-blue-700 font-medium">Total Sessions</div>
-                    {sessionCounts.isPreview && (
-                      <div className="text-xs text-orange-500 mt-1">*Preview</div>
-                    )}
                   </div>
                 </div>
                 
@@ -526,14 +520,9 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                   </div>
                   <p className="text-xs text-gray-500 mt-2 text-center">
                     {Math.round(((sessionCounts.totalSessions - sessionCounts.sessionsLeft) / sessionCounts.totalSessions) * 100)}% Complete
-                    {sessionCounts.isPreview && (
-                      <span className="text-orange-500"> (Preview)</span>
-                    )}
                   </p>
                 </div>
               </div>
-
-              <Separator />
 
               {/* Session History */}
               <div className="mt-6">
