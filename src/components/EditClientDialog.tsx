@@ -49,6 +49,11 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   
   const { sessions } = useSessions();
   const [clientSessions, setClientSessions] = useState<Session[]>([]);
+  const [sessionCounts, setSessionCounts] = useState({
+    totalSessions: client.total_sessions,
+    sessionsLeft: client.sessions_left,
+    completedSessions: 0
+  });
 
   // Helper function to extract sessions from package string
   const getSessionsFromPackage = (packageStr: string) => {
@@ -56,30 +61,38 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     return match ? parseInt(match[1]) : 10;
   };
 
-  // Calculate dynamic session counts based on selected package
-  const selectedPackage = packages.find(pkg => pkg.name === formData.package);
-  const dynamicTotalSessions = selectedPackage ? selectedPackage.sessions : getSessionsFromPackage(formData.package);
-  
-  // Calculate how many sessions have been used from the current client's package
-  const completedSessions = clientSessions.filter(session => 
-    session.status === 'completed' || new Date(session.date) < new Date()
-  ).length;
-  
-  // If the package hasn't changed, use the actual client data
-  // If the package has changed, calculate what the new values would be
-  const displayTotalSessions = formData.package === client.package ? client.total_sessions : dynamicTotalSessions;
-  const displaySessionsLeft = formData.package === client.package ? client.sessions_left : Math.max(0, dynamicTotalSessions - completedSessions);
+  // Calculate session counts whenever package or sessions change
+  useEffect(() => {
+    const selectedPackage = packages.find(pkg => pkg.name === formData.package);
+    const dynamicTotalSessions = selectedPackage ? selectedPackage.sessions : getSessionsFromPackage(formData.package);
+    
+    // Calculate how many sessions have been used from the current client's package
+    const completedSessions = clientSessions.filter(session => 
+      session.status === 'completed' || new Date(session.date) < new Date()
+    ).length;
+    
+    // If the package hasn't changed, use the actual client data
+    // If the package has changed, calculate what the new values would be
+    const displayTotalSessions = formData.package === client.package ? client.total_sessions : dynamicTotalSessions;
+    const displaySessionsLeft = formData.package === client.package ? client.sessions_left : Math.max(0, dynamicTotalSessions - completedSessions);
 
-  // Debug logging
-  console.log('=== EDIT CLIENT DIALOG DEBUG ===');
-  console.log('Current package:', formData.package);
-  console.log('Original package:', client.package);
-  console.log('Selected package object:', selectedPackage);
-  console.log('Dynamic total sessions:', dynamicTotalSessions);
-  console.log('Completed sessions:', completedSessions);
-  console.log('Display total sessions:', displayTotalSessions);
-  console.log('Display sessions left:', displaySessionsLeft);
-  console.log('Package changed:', formData.package !== client.package);
+    setSessionCounts({
+      totalSessions: displayTotalSessions,
+      sessionsLeft: displaySessionsLeft,
+      completedSessions: completedSessions
+    });
+
+    // Debug logging
+    console.log('=== SESSION COUNTS UPDATE ===');
+    console.log('Current package:', formData.package);
+    console.log('Original package:', client.package);
+    console.log('Selected package object:', selectedPackage);
+    console.log('Dynamic total sessions:', dynamicTotalSessions);
+    console.log('Completed sessions:', completedSessions);
+    console.log('Display total sessions:', displayTotalSessions);
+    console.log('Display sessions left:', displaySessionsLeft);
+    console.log('Package changed:', formData.package !== client.package);
+  }, [formData.package, clientSessions, packages, client.package, client.total_sessions, client.sessions_left]);
 
   useEffect(() => {
     if (open) {
@@ -182,6 +195,8 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
       return 'Invalid Date';
     }
   };
+
+  const selectedPackage = packages.find(pkg => pkg.name === formData.package);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -467,14 +482,14 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                 
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                    <div className="text-2xl font-bold text-green-600">{displaySessionsLeft}</div>
+                    <div className="text-2xl font-bold text-green-600">{sessionCounts.sessionsLeft}</div>
                     <div className="text-xs text-green-700 font-medium">Sessions Left</div>
                     {formData.package !== client.package && (
                       <div className="text-xs text-orange-500 mt-1">*Preview</div>
                     )}
                   </div>
                   <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="text-2xl font-bold text-blue-600">{displayTotalSessions}</div>
+                    <div className="text-2xl font-bold text-blue-600">{sessionCounts.totalSessions}</div>
                     <div className="text-xs text-blue-700 font-medium">Total Sessions</div>
                     {formData.package !== client.package && (
                       <div className="text-xs text-orange-500 mt-1">*Preview</div>
@@ -485,18 +500,18 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                 <div className="pt-2">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium text-gray-600">Progress</span>
-                    <span className="text-sm font-bold text-purple-600">{completedSessions} completed</span>
+                    <span className="text-sm font-bold text-purple-600">{sessionCounts.completedSessions} completed</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div 
                       className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500 shadow-sm" 
                       style={{ 
-                        width: `${((displayTotalSessions - displaySessionsLeft) / displayTotalSessions) * 100}%` 
+                        width: `${((sessionCounts.totalSessions - sessionCounts.sessionsLeft) / sessionCounts.totalSessions) * 100}%` 
                       }}
                     ></div>
                   </div>
                   <p className="text-xs text-gray-500 mt-2 text-center">
-                    {Math.round(((displayTotalSessions - displaySessionsLeft) / displayTotalSessions) * 100)}% Complete
+                    {Math.round(((sessionCounts.totalSessions - sessionCounts.sessionsLeft) / sessionCounts.totalSessions) * 100)}% Complete
                     {formData.package !== client.package && (
                       <span className="text-orange-500"> (Preview)</span>
                     )}
