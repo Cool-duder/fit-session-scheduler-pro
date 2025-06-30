@@ -46,20 +46,21 @@ export const useEditClientSessionCounts = (
       const match = packageStr.match(pattern);
       if (match) {
         const sessions = parseInt(match[1]);
-        console.log('Extracted sessions from regex:', sessions);
+        console.log('Extracted sessions from regex:', sessions, 'for package:', packageStr);
         return sessions;
       }
     }
     
-    console.log('No match found, defaulting to 1 session');
+    console.log('No match found for package:', packageStr, 'defaulting to 1 session');
     return 1; // Default fallback
   };
 
   useEffect(() => {
     console.log('=== SESSION COUNTS UPDATE ===');
+    console.log('Client:', client.name);
     console.log('Client package:', client.package);
     console.log('Selected package:', selectedPackage);
-    console.log('Client sessions:', clientSessions);
+    console.log('Client sessions:', clientSessions.length);
     
     // Calculate completed sessions
     const completedSessions = clientSessions.filter(session => 
@@ -88,19 +89,24 @@ export const useEditClientSessionCounts = (
         isPreview: true
       });
     } else {
-      // Package hasn't changed - use original client data
-      console.log('=== PACKAGE UNCHANGED - ORIGINAL DATA ===');
-      console.log('Original total sessions:', client.total_sessions);
-      console.log('Original sessions left:', client.sessions_left);
+      // Package hasn't changed - but let's still verify with current package
+      const currentTotalSessions = getSessionsFromPackage(client.package);
+      const currentSessionsLeft = Math.max(0, currentTotalSessions - completedSessions);
       
+      console.log('=== PACKAGE UNCHANGED - VERIFIED DATA ===');
+      console.log('Verified total sessions:', currentTotalSessions);
+      console.log('Verified sessions left:', currentSessionsLeft);
+      console.log('Original client data - total:', client.total_sessions, 'left:', client.sessions_left);
+      
+      // Use the calculated values to ensure consistency
       setSessionCounts({
-        totalSessions: client.total_sessions,
-        sessionsLeft: client.sessions_left,
+        totalSessions: currentTotalSessions,
+        sessionsLeft: currentSessionsLeft,
         completedSessions: completedSessions,
         isPreview: false
       });
     }
-  }, [selectedPackage, clientSessions, packages, client.package, client.total_sessions, client.sessions_left]);
+  }, [selectedPackage, clientSessions, packages, client.package, client.total_sessions, client.sessions_left, client.name]);
 
   return sessionCounts;
 };
