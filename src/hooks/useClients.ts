@@ -33,7 +33,7 @@ export const useClients = () => {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('name', { ascending: true })
 
       if (error) throw error
       
@@ -148,7 +148,11 @@ export const useClients = () => {
       // Record the package purchase
       await recordPackagePurchase({ ...data, id: data.id }, true)
 
-      setClients(prev => [data, ...prev])
+      // Insert new client in alphabetical order
+      setClients(prev => {
+        const updated = [data, ...prev]
+        return updated.sort((a, b) => a.name.localeCompare(b.name))
+      })
       
       toast({
         title: "Success",
@@ -220,9 +224,13 @@ export const useClients = () => {
         await recordPackagePurchase({ ...data, id: clientId }, false)
       }
 
-      setClients(prev => prev.map(client => 
-        client.id === clientId ? data : client
-      ))
+      // Update client and maintain alphabetical order
+      setClients(prev => {
+        const updated = prev.map(client => 
+          client.id === clientId ? data : client
+        )
+        return updated.sort((a, b) => a.name.localeCompare(b.name))
+      })
 
       toast({
         title: "Success",
