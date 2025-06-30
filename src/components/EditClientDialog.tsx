@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -59,13 +58,16 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
 
   // Helper function to extract sessions from package string
   const getSessionsFromPackage = (packageStr: string) => {
+    const selectedPackage = packages.find(pkg => pkg.name === packageStr);
+    if (selectedPackage) {
+      return selectedPackage.sessions;
+    }
     const match = packageStr.match(/(\d+)x/);
     return match ? parseInt(match[1]) : 10;
   };
 
   // Calculate session counts whenever package or sessions change
   useEffect(() => {
-    const selectedPackage = packages.find(pkg => pkg.name === formData.package);
     const packageChanged = formData.package !== client.package;
     
     // Calculate how many sessions have been completed
@@ -75,8 +77,14 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     
     if (packageChanged) {
       // Package has changed - show preview calculations
-      const newTotalSessions = selectedPackage ? selectedPackage.sessions : getSessionsFromPackage(formData.package);
+      const newTotalSessions = getSessionsFromPackage(formData.package);
       const newSessionsLeft = Math.max(0, newTotalSessions - completedSessions);
+      
+      console.log('=== PACKAGE CHANGED - PREVIEW MODE ===');
+      console.log('New package:', formData.package);
+      console.log('New total sessions:', newTotalSessions);
+      console.log('Completed sessions:', completedSessions);
+      console.log('New sessions left:', newSessionsLeft);
       
       setSessionCounts({
         totalSessions: newTotalSessions,
@@ -86,6 +94,11 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
       });
     } else {
       // Package hasn't changed - show original client data
+      console.log('=== PACKAGE UNCHANGED - ORIGINAL DATA ===');
+      console.log('Original total sessions:', client.total_sessions);
+      console.log('Original sessions left:', client.sessions_left);
+      console.log('Completed sessions:', completedSessions);
+      
       setSessionCounts({
         totalSessions: client.total_sessions,
         sessionsLeft: client.sessions_left,
@@ -93,19 +106,6 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
         isPreview: false
       });
     }
-
-    // Debug logging
-    console.log('=== SESSION COUNTS UPDATE ===');
-    console.log('Current package:', formData.package);
-    console.log('Original package:', client.package);
-    console.log('Package changed:', packageChanged);
-    console.log('Selected package object:', selectedPackage);
-    console.log('Completed sessions:', completedSessions);
-    console.log('Final session counts:', {
-      totalSessions: packageChanged ? (selectedPackage ? selectedPackage.sessions : getSessionsFromPackage(formData.package)) : client.total_sessions,
-      sessionsLeft: packageChanged ? Math.max(0, (selectedPackage ? selectedPackage.sessions : getSessionsFromPackage(formData.package)) - completedSessions) : client.sessions_left,
-      isPreview: packageChanged
-    });
   }, [formData.package, clientSessions, packages, client.package, client.total_sessions, client.sessions_left]);
 
   useEffect(() => {
