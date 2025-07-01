@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Edit, Trash2, User, Calendar, Package, MapPin, Phone, Mail, Gift } from "lucide-react";
 import { Client } from "@/hooks/useClients";
 import { format } from "date-fns";
+import EditClientDialog from "./EditClientDialog";
 
 interface ClientCardProps {
   client: Client;
@@ -56,14 +56,12 @@ const ClientCard = ({ client, onEdit, onDelete }: ClientCardProps) => {
           </div>
           
           <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => onEdit(client)}
-              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
+            <EditClientDialog
+              client={client}
+              onEditClient={(clientId, updatedData) => {
+                onEdit({ ...client, ...updatedData });
+              }}
+            />
             <Button
               variant="outline"
               size="icon"
