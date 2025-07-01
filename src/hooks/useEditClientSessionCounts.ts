@@ -61,6 +61,8 @@ export const useEditClientSessionCounts = (
     console.log('Client package:', client.package);
     console.log('Selected package:', selectedPackage);
     console.log('Client sessions:', clientSessions.length);
+    console.log('Client total_sessions from DB:', client.total_sessions);
+    console.log('Client sessions_left from DB:', client.sessions_left);
     
     // Calculate completed sessions
     const completedSessions = clientSessions.filter(session => 
@@ -89,19 +91,14 @@ export const useEditClientSessionCounts = (
         isPreview: true
       });
     } else {
-      // Package hasn't changed - but let's still verify with current package
-      const currentTotalSessions = getSessionsFromPackage(client.package);
-      const currentSessionsLeft = Math.max(0, currentTotalSessions - completedSessions);
+      // Package hasn't changed - use the actual database values
+      console.log('=== USING DATABASE VALUES ===');
+      console.log('DB total sessions:', client.total_sessions);
+      console.log('DB sessions left:', client.sessions_left);
       
-      console.log('=== PACKAGE UNCHANGED - VERIFIED DATA ===');
-      console.log('Verified total sessions:', currentTotalSessions);
-      console.log('Verified sessions left:', currentSessionsLeft);
-      console.log('Original client data - total:', client.total_sessions, 'left:', client.sessions_left);
-      
-      // Use the calculated values to ensure consistency
       setSessionCounts({
-        totalSessions: currentTotalSessions,
-        sessionsLeft: currentSessionsLeft,
+        totalSessions: client.total_sessions,
+        sessionsLeft: client.sessions_left,
         completedSessions: completedSessions,
         isPreview: false
       });

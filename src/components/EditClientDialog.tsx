@@ -51,9 +51,12 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     console.log('Adding package to client:', client.name, packageData);
     const result = await addPackageToClient(client, packageData);
     if (result.success) {
-      console.log('Package added successfully, closing dialog and refreshing...');
+      console.log('Package added successfully');
       setOpen(false);
-      window.location.reload();
+      // Force a complete page refresh to ensure all data is updated
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     }
   };
 
