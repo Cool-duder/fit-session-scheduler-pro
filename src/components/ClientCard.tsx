@@ -47,6 +47,10 @@ const ClientCard = ({ client, onEdit, onDelete }: ClientCardProps) => {
     onEdit(updatedClient);
   };
 
+  // Ensure we display valid session counts
+  const totalSessions = client.total_sessions || 0;
+  const sessionsLeft = client.sessions_left || 0;
+
   return (
     <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500">
       <CardContent className="p-6">
@@ -120,11 +124,11 @@ const ClientCard = ({ client, onEdit, onDelete }: ClientCardProps) => {
             <div className="flex items-center space-x-2">
               <Package className="w-4 h-4 text-gray-500" />
               <span className="text-sm font-medium text-gray-900">
-                {client.sessions_left} Left - {client.total_sessions} Total - {client.package}
+                {sessionsLeft} Left - {totalSessions} Total - {client.package}
               </span>
             </div>
-            <div className={`px-2 py-1 rounded-full text-xs font-medium ${getSessionsLeftColor(client.sessions_left)}`}>
-              {client.sessions_left === 0 ? 'No sessions' : `${client.sessions_left} left`}
+            <div className={`px-2 py-1 rounded-full text-xs font-medium ${getSessionsLeftColor(sessionsLeft)}`}>
+              {sessionsLeft === 0 ? 'No sessions' : `${sessionsLeft} left`}
             </div>
           </div>
         </div>

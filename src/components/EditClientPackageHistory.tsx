@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +24,6 @@ interface EditClientPackageHistoryProps {
 const EditClientPackageHistory = ({ client, onPackageDeleted, onPackageEdited }: EditClientPackageHistoryProps) => {
   const { purchases, loading, editPurchase, deletePurchase, refetch } = usePackagePurchases();
   const { toast } = useToast();
-  const [clientPurchases, setClientPurchases] = useState<PackagePurchase[]>([]);
   const [editingPurchase, setEditingPurchase] = useState<PackagePurchase | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -34,20 +33,22 @@ const EditClientPackageHistory = ({ client, onPackageDeleted, onPackageEdited }:
     payment_type: 'Cash'
   });
 
-  useEffect(() => {
+  // Memoize filtered purchases to prevent unnecessary recalculations
+  const clientPurchases = useMemo(() => {
     console.log('=== PACKAGE HISTORY: Filtering purchases for client ===');
     console.log('All purchases:', purchases.length);
     console.log('Client ID:', client.id);
     
     const filtered = purchases.filter(purchase => purchase.client_id === client.id);
     console.log('Filtered purchases for client:', filtered.length);
-    setClientPurchases(filtered);
+    return filtered;
   }, [purchases, client.id]);
 
+  // Only fetch purchases once when component mounts, not on every render
   useEffect(() => {
     console.log('=== PACKAGE HISTORY: Component mounted, fetching purchases ===');
     refetch();
-  }, [refetch]);
+  }, []); // Empty dependency array to run only once
 
   const handleEditPurchase = async () => {
     if (!editingPurchase) return;

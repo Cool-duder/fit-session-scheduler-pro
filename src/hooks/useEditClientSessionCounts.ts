@@ -96,9 +96,10 @@ export const useEditClientSessionCounts = (
       console.log('DB total sessions:', client.total_sessions);
       console.log('DB sessions left:', client.sessions_left);
       
+      // Make sure we're showing the correct values from the database
       setSessionCounts({
-        totalSessions: client.total_sessions,
-        sessionsLeft: client.sessions_left,
+        totalSessions: client.total_sessions || 0,
+        sessionsLeft: client.sessions_left || 0,
         completedSessions: completedSessions,
         isPreview: false
       });
