@@ -158,8 +158,14 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     amount: number;
     payment_type: string;
   }) => {
+    console.log('Adding package to client:', client.name, packageData);
     const result = await addPackageToClient(client, packageData);
     if (result.success) {
+      console.log('Package added successfully, refreshing page...');
+      // Close the add package dialog
+      setAddPackageDialogOpen(false);
+      // Close the edit client dialog
+      setOpen(false);
       // Refresh the page to show updated session counts
       window.location.reload();
     }
@@ -229,7 +235,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                   disabled={packageLoading}
                 >
                   <ShoppingCart className="h-4 w-4" />
-                  Add Package
+                  {packageLoading ? 'Adding...' : 'Add Package'}
                 </Button>
                 
                 <div className="flex space-x-3">
