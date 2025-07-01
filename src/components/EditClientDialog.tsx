@@ -48,15 +48,27 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     amount: number;
     payment_type: string;
   }) => {
-    console.log('Adding package to client:', client.name, packageData);
-    const result = await addPackageToClient(client, packageData);
-    if (result.success) {
-      console.log('Package added successfully');
-      setOpen(false);
-      // Force a complete page refresh to ensure all data is updated
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+    console.log('=== EDIT CLIENT DIALOG: Adding package ===');
+    console.log('Client:', client.name, 'ID:', client.id);
+    console.log('Package data:', packageData);
+    
+    try {
+      const result = await addPackageToClient(client, packageData);
+      console.log('Add package result:', result);
+      
+      if (result.success) {
+        console.log('Package added successfully, closing dialog and refreshing');
+        setOpen(false);
+        
+        // Force a complete page refresh to ensure all data is updated
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      } else {
+        console.error('Failed to add package:', result.error);
+      }
+    } catch (error) {
+      console.error('Error in handleAddPackage:', error);
     }
   };
 

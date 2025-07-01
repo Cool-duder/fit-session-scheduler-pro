@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,8 +54,22 @@ const EditClientPackageManager = ({
     amount: number;
     payment_type: string;
   }) => {
-    await onAddPackage(packageData);
-    setAddPackageDialogOpen(false);
+    console.log('=== PACKAGE MANAGER: Handling add package ===');
+    console.log('Package data:', packageData);
+    
+    try {
+      await onAddPackage(packageData);
+      console.log('Package added successfully from manager');
+      setAddPackageDialogOpen(false);
+    } catch (error) {
+      console.error('Error adding package from manager:', error);
+    }
+  };
+
+  const handleQuickPackageAdd = (pkg: any) => {
+    console.log('=== QUICK PACKAGE ADD ===');
+    console.log('Selected package:', pkg);
+    setAddPackageDialogOpen(true);
   };
 
   return (
@@ -73,11 +86,11 @@ const EditClientPackageManager = ({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{sessionCounts?.sessionsLeft || 0}</div>
-              <div className="text-sm text-gray-600">Sessions Left</div>
+              <div className="text-sm text-gray-600">Session Left</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">{sessionCounts?.totalSessions || 0}</div>
-              <div className="text-sm text-gray-600">Total Sessions</div>
+              <div className="text-sm text-gray-600">Total Session</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">{sessionCounts?.completedSessions || 0}</div>
@@ -174,7 +187,7 @@ const EditClientPackageManager = ({
                         key={pkg.id}
                         variant="outline"
                         className="justify-between h-auto p-3 hover:bg-green-50 hover:border-green-300"
-                        onClick={() => setAddPackageDialogOpen(true)}
+                        onClick={() => handleQuickPackageAdd(pkg)}
                         disabled={packageLoading}
                       >
                         <div className="text-left">

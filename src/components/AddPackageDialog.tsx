@@ -16,7 +16,7 @@ interface AddPackageDialogProps {
     package_sessions: number;
     amount: number;
     payment_type: string;
-  }) => void;
+  }) => Promise<void>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -27,27 +27,47 @@ const AddPackageDialog = ({ client, onAddPackage, open, onOpenChange }: AddPacka
   const [customPrice, setCustomPrice] = useState(0);
   const [paymentType, setPaymentType] = useState("Cash");
   const [isCustomPrice, setIsCustomPrice] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedPackageData = packages.find(pkg => pkg.name === selectedPackage);
 
-  const handleSubmit = () => {
-    if (!selectedPackage || !selectedPackageData) return;
+  const handleSubmit = async () => {
+    if (!selectedPackage || !selectedPackageData || isSubmitting) return;
 
-    const finalPrice = isCustomPrice ? customPrice : selectedPackageData.price;
+    console.log('=== SUBMITTING ADD PACKAGE ===');
+    console.log('Selected package:', selectedPackage);
+    console.log('Package data:', selectedPackageData);
+    console.log('Custom price:', isCustomPrice, customPrice);
+    console.log('Payment type:', paymentType);
 
-    onAddPackage({
-      package_name: selectedPackage,
-      package_sessions: selectedPackageData.sessions,
-      amount: finalPrice,
-      payment_type: paymentType
-    });
+    setIsSubmitting(true);
 
-    // Reset form
-    setSelectedPackage("");
-    setCustomPrice(0);
-    setPaymentType("Cash");
-    setIsCustomPrice(false);
-    onOpenChange(false);
+    try {
+      const finalPrice = isCustomPrice ? customPrice : selectedPackageData.price;
+
+      const packageData = {
+        package_name: selectedPackage,
+        package_sessions: selectedPackageData.sessions,
+        amount: finalPrice,
+        payment_type: paymentType
+      };
+
+      console.log('Final package data to submit:', packageData);
+
+      await onAddPackage(packageData);
+
+      // Reset form
+      setSelectedPackage("");
+      setCustomPrice(0);
+      setPaymentType("Cash");
+      setIsCustomPrice(false);
+      
+      console.log('Package added successfully, closing dialog');
+    } catch (error) {
+      console.error('Error adding package:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -127,15 +147,19 @@ const AddPackageDialog = ({ client, onAddPackage, open, onOpenChange }: AddPacka
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
             <Button 
               onClick={handleSubmit}
-              disabled={!selectedPackage}
+              disabled={!selectedPackage || isSubmitting}
               className="bg-green-600 hover:bg-green-700"
             >
-              Add Package
+              {isSubmitting ? 'Adding...' : 'Add Package'}
             </Button>
           </div>
         </div>
