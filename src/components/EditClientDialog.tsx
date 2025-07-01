@@ -1,16 +1,19 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Edit, User } from "lucide-react";
+import { Edit, User, ShoppingCart } from "lucide-react";
 import { Client } from "@/hooks/useClients";
 import { useSessions, Session } from "@/hooks/useSessions";
 import { usePackages } from "@/hooks/usePackages";
 import { safeParseDateString, debugDate } from "@/lib/dateUtils";
 import { useEditClientSessionCounts } from "@/hooks/useEditClientSessionCounts";
+import { useClientPackagePurchase } from "@/hooks/useClientPackagePurchase";
 import EditClientPersonalInfo from "./EditClientPersonalInfo";
 import EditClientPackagePricing from "./EditClientPackagePricing";
 import EditClientTrainingDetails from "./EditClientTrainingDetails";
 import EditClientSessionOverview from "./EditClientSessionOverview";
+import AddPackageDialog from "./AddPackageDialog";
 
 interface EditClientDialogProps {
   client: Client;
@@ -29,6 +32,7 @@ interface EditClientDialogProps {
 
 const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   const [open, setOpen] = useState(false);
+  const [addPackageDialogOpen, setAddPackageDialogOpen] = useState(false);
   const { packages } = usePackages();
   const [isCustomPrice, setIsCustomPrice] = useState(false);
   const [formData, setFormData] = useState({
@@ -45,6 +49,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   
   const { sessions } = useSessions();
   const [clientSessions, setClientSessions] = useState<Session[]>([]);
+  const { addPackageToClient, loading: packageLoading } = useClientPackagePurchase();
   
   // Use the hook with current form data
   const sessionCounts = useEditClientSessionCounts(client, clientSessions, formData.package);
@@ -147,87 +152,122 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     }
   };
 
+  const handleAddPackage = async (packageData: {
+    package_name: string;
+    package_sessions: number;
+    amount: number;
+    payment_type: string;
+  }) => {
+    const result = await addPackageToClient(client, packageData);
+    if (result.success) {
+      // Refresh the page to show updated session counts
+      window.location.reload();
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden">
-        <DialogHeader className="pb-4">
-          <DialogTitle className="text-2xl font-bold text-blue-900 flex items-center gap-2">
-            <User className="h-6 w-6" />
-            Edit Client - {formData.name}
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-y-auto max-h-[calc(95vh-120px)]">
-          {/* Left Column - Client Information Form */}
-          <div className="space-y-6">
-            <EditClientPersonalInfo
-              formData={{
-                name: formData.name,
-                email: formData.email,
-                phone: formData.phone,
-                birthday: formData.birthday
-              }}
-              onFormDataChange={handleFormDataChange}
-              onSubmit={handleSubmit}
-            />
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-2xl font-bold text-blue-900 flex items-center gap-2">
+              <User className="h-6 w-6" />
+              Edit Client - {formData.name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-y-auto max-h-[calc(95vh-120px)]">
+            {/* Left Column - Client Information Form */}
+            <div className="space-y-6">
+              <EditClientPersonalInfo
+                formData={{
+                  name: formData.name,
+                  email: formData.email,
+                  phone: formData.phone,
+                  birthday: formData.birthday
+                }}
+                onFormDataChange={handleFormDataChange}
+                onSubmit={handleSubmit}
+              />
 
-            <EditClientPackagePricing
-              formData={{
-                package: formData.package,
-                price: formData.price
-              }}
-              isCustomPrice={isCustomPrice}
-              onFormDataChange={handleFormDataChange}
-              onPackageChange={handlePackageChange}
-              onCustomPriceToggle={handleCustomPriceToggle}
-            />
+              <EditClientPackagePricing
+                formData={{
+                  package: formData.package,
+                  price: formData.price
+                }}
+                isCustomPrice={isCustomPrice}
+                onFormDataChange={handleFormDataChange}
+                onPackageChange={handlePackageChange}
+                onCustomPriceToggle={handleCustomPriceToggle}
+              />
 
-            <EditClientTrainingDetails
-              formData={{
-                paymentType: formData.paymentType,
-                regularSlot: formData.regularSlot,
-                location: formData.location
-              }}
-              onFormDataChange={handleFormDataChange}
-            />
+              <EditClientTrainingDetails
+                formData={{
+                  paymentType: formData.paymentType,
+                  regularSlot: formData.regularSlot,
+                  location: formData.location
+                }}
+                onFormDataChange={handleFormDataChange}
+              />
 
-            {/* Action Buttons */}
-            <div className="flex justify-end space-x-3 pt-4 border-t">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)} className="px-6">
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSubmit} 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-              >
-                Save Changes
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex justify-between items-center pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setAddPackageDialogOpen(true)}
+                  className="bg-green-50 hover:bg-green-100 text-green-700 border-green-300 flex items-center gap-2"
+                  disabled={packageLoading}
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  Add Package
+                </Button>
+                
+                <div className="flex space-x-3">
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)} className="px-6">
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleSubmit} 
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Session Overview */}
+            <div className="space-y-6">
+              <EditClientSessionOverview
+                formData={{
+                  birthday: formData.birthday,
+                  paymentType: formData.paymentType
+                }}
+                sessionCounts={sessionCounts}
+                clientSessions={clientSessions}
+              />
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
 
-          {/* Right Column - Session Overview */}
-          <div className="space-y-6">
-            <EditClientSessionOverview
-              formData={{
-                birthday: formData.birthday,
-                paymentType: formData.paymentType
-              }}
-              sessionCounts={sessionCounts}
-              clientSessions={clientSessions}
-            />
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <AddPackageDialog
+        client={client}
+        onAddPackage={handleAddPackage}
+        open={addPackageDialogOpen}
+        onOpenChange={setAddPackageDialogOpen}
+      />
+    </>
   );
 };
 
