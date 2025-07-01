@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,8 @@ interface ClientCardProps {
 }
 
 const ClientCard = ({ client, onEdit, onDelete }: ClientCardProps) => {
+  console.log('ClientCard rendered for client:', client.name);
+  
   const isBirthdayToday = () => {
     if (!client.birthday) return false;
     const today = new Date();
@@ -25,6 +28,11 @@ const ClientCard = ({ client, onEdit, onDelete }: ClientCardProps) => {
     if (sessionsLeft <= 0) return "text-red-600 bg-red-50";
     if (sessionsLeft <= 3) return "text-orange-600 bg-orange-50";
     return "text-green-600 bg-green-50";
+  };
+
+  const handleEditClient = (clientId: string, updatedData: any) => {
+    console.log('Edit client called from ClientCard:', clientId, updatedData);
+    onEdit({ ...client, ...updatedData });
   };
 
   return (
@@ -58,9 +66,7 @@ const ClientCard = ({ client, onEdit, onDelete }: ClientCardProps) => {
           <div className="flex space-x-2">
             <EditClientDialog
               client={client}
-              onEditClient={(clientId, updatedData) => {
-                onEdit({ ...client, ...updatedData });
-              }}
+              onEditClient={handleEditClient}
             />
             <Button
               variant="outline"
