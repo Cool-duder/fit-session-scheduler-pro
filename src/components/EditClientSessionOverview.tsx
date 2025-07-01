@@ -75,11 +75,11 @@ const EditClientSessionOverview = ({ formData, sessionCounts, clientSessions }: 
         <div className="grid grid-cols-2 gap-4 pt-2">
           <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
             <div className="text-2xl font-bold text-green-600">{sessionCounts.sessionsLeft}</div>
-            <div className="text-xs text-green-700 font-medium">Sessions Left</div>
+            <div className="text-xs text-green-700 font-medium">Session Left</div>
           </div>
           <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
             <div className="text-2xl font-bold text-blue-600">{sessionCounts.totalSessions}</div>
-            <div className="text-xs text-blue-700 font-medium">Total Sessions</div>
+            <div className="text-xs text-blue-700 font-medium">Total Session</div>
           </div>
         </div>
         
@@ -92,12 +92,12 @@ const EditClientSessionOverview = ({ formData, sessionCounts, clientSessions }: 
             <div 
               className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500 shadow-sm" 
               style={{ 
-                width: `${((sessionCounts.totalSessions - sessionCounts.sessionsLeft) / sessionCounts.totalSessions) * 100}%` 
+                width: `${sessionCounts.totalSessions > 0 ? ((sessionCounts.totalSessions - sessionCounts.sessionsLeft) / sessionCounts.totalSessions) * 100 : 0}%` 
               }}
             ></div>
           </div>
           <p className="text-xs text-gray-500 mt-2 text-center">
-            {Math.round(((sessionCounts.totalSessions - sessionCounts.sessionsLeft) / sessionCounts.totalSessions) * 100)}% Complete
+            {sessionCounts.totalSessions > 0 ? Math.round(((sessionCounts.totalSessions - sessionCounts.sessionsLeft) / sessionCounts.totalSessions) * 100) : 0}% Complete
           </p>
         </div>
       </div>
