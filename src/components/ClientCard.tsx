@@ -39,7 +39,7 @@ const ClientCard = ({ client, onEdit, onDelete }: ClientCardProps) => {
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 {client.name}
                 {isBirthdayToday() && (
-                  <Gift className="w-4 h-4 text-pink-500" title="Birthday today!" />
+                  <Gift className="w-4 h-4 text-pink-500" />
                 )}
               </h3>
               <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">

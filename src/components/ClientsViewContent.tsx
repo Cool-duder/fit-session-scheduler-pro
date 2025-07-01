@@ -21,8 +21,8 @@ const ClientsViewContent = ({ clients, onEditClient, onDeleteClient }: ClientsVi
         <ClientCard
           key={client.id}
           client={client}
-          onEditClient={onEditClient}
-          onDeleteClient={onDeleteClient}
+          onEdit={(client) => onEditClient(client.id, client)}
+          onDelete={(clientId) => onDeleteClient(clientId, client.name)}
         />
       ))}
     </div>
