@@ -15,7 +15,10 @@ interface ClientCardProps {
 }
 
 const ClientCard = ({ client, onEdit, onDelete }: ClientCardProps) => {
-  console.log('ClientCard rendered for client:', client.name);
+  console.log('ClientCard rendered for client:', client.name, 'Sessions:', {
+    total: client.total_sessions,
+    left: client.sessions_left
+  });
   
   const isBirthdayToday = () => {
     if (!client.birthday) return false;
@@ -32,7 +35,16 @@ const ClientCard = ({ client, onEdit, onDelete }: ClientCardProps) => {
 
   const handleEditClient = (clientId: string, updatedData: any) => {
     console.log('Edit client called from ClientCard:', clientId, updatedData);
-    onEdit({ ...client, ...updatedData });
+    // Create a proper Client object with updated data
+    const updatedClient = {
+      ...client,
+      ...updatedData,
+      // Ensure these fields are properly mapped
+      regular_slot: updatedData.regularSlot || client.regular_slot,
+      payment_type: updatedData.paymentType || client.payment_type,
+    };
+    console.log('Updated client object:', updatedClient);
+    onEdit(updatedClient);
   };
 
   return (

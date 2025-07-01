@@ -51,19 +51,33 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     console.log('=== EDIT CLIENT DIALOG: Adding package ===');
     console.log('Client:', client.name, 'ID:', client.id);
     console.log('Package data:', packageData);
+    console.log('Current client sessions - Total:', client.total_sessions, 'Left:', client.sessions_left);
     
     try {
       const result = await addPackageToClient(client, packageData);
       console.log('Add package result:', result);
       
-      if (result.success) {
-        console.log('Package added successfully, closing dialog and refreshing');
-        setOpen(false);
+      if (result.success && result.updatedClient) {
+        console.log('Package added successfully, updating client data');
+        console.log('Updated client sessions - Total:', result.updatedClient.total_sessions, 'Left:', result.updatedClient.sessions_left);
         
-        // Force a complete page refresh to ensure all data is updated
+        // Update the client data immediately to reflect the new session counts
+        onEditClient(client.id, {
+          name: result.updatedClient.name,
+          email: result.updatedClient.email,
+          phone: result.updatedClient.phone,
+          package: result.updatedClient.package,
+          price: result.updatedClient.price || client.price || 120,
+          regularSlot: result.updatedClient.regular_slot,
+          location: result.updatedClient.location || '',
+          paymentType: result.updatedClient.payment_type || 'Cash',
+          birthday: result.updatedClient.birthday || undefined
+        });
+        
+        // Close the dialog after a short delay to show the updated data
         setTimeout(() => {
-          window.location.reload();
-        }, 500);
+          setOpen(false);
+        }, 1000);
       } else {
         console.error('Failed to add package:', result.error);
       }
