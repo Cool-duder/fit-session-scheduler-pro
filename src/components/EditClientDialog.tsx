@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Edit, User } from "lucide-react";
 import { Client } from "@/hooks/useClients";
 import { useClientPackagePurchase } from "@/hooks/useClientPackagePurchase";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import EditClientPersonalInfo from "./EditClientPersonalInfo";
 import EditClientSessionOverview from "./EditClientSessionOverview";
 import EditClientFormManager from "./EditClientFormManager";
 import EditClientPackageManager from "./EditClientPackageManager";
+import EditClientPackageHistory from "./EditClientPackageHistory";
 
 interface EditClientDialogProps {
   client: Client;
@@ -28,6 +31,7 @@ interface EditClientDialogProps {
 const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   const [open, setOpen] = useState(false);
   const { addPackageToClient, loading: packageLoading } = useClientPackagePurchase();
+  const { toast } = useToast();
 
   const handleSubmit = (formData: any) => {
     if (formData.name && formData.email && formData.phone) {
@@ -86,6 +90,104 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     }
   };
 
+  const handlePackageDeleted = async (deletedSessions: number) => {
+    console.log('=== PACKAGE DELETED ===');
+    console.log('Sessions to remove:', deletedSessions);
+    console.log('Current client sessions - Total:', client.total_sessions, 'Left:', client.sessions_left);
+
+    try {
+      const newTotalSessions = Math.max(0, client.total_sessions - deletedSessions);
+      const newSessionsLeft = Math.max(0, client.sessions_left - deletedSessions);
+
+      console.log('New session counts - Total:', newTotalSessions, 'Left:', newSessionsLeft);
+
+      const { error } = await supabase
+        .from('clients')
+        .update({
+          total_sessions: newTotalSessions,
+          sessions_left: newSessionsLeft
+        })
+        .eq('id', client.id);
+
+      if (error) throw error;
+
+      // Update the client data in the UI
+      onEditClient(client.id, {
+        name: client.name,
+        email: client.email,
+        phone: client.phone,
+        package: client.package,
+        price: client.price || 120,
+        regularSlot: client.regular_slot,
+        location: client.location || '',
+        paymentType: client.payment_type || 'Cash',
+        birthday: client.birthday || undefined
+      });
+
+      toast({
+        title: "Package Deleted",
+        description: `Removed ${deletedSessions} sessions from ${client.name}'s account`,
+      });
+    } catch (error) {
+      console.error('Error updating client after package deletion:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update session counts after package deletion",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePackageEdited = async (sessionDifference: number) => {
+    console.log('=== PACKAGE EDITED ===');
+    console.log('Session difference:', sessionDifference);
+    console.log('Current client sessions - Total:', client.total_sessions, 'Left:', client.sessions_left);
+
+    try {
+      const newTotalSessions = Math.max(0, client.total_sessions + sessionDifference);
+      const newSessionsLeft = Math.max(0, client.sessions_left + sessionDifference);
+
+      console.log('New session counts - Total:', newTotalSessions, 'Left:', newSessionsLeft);
+
+      const { error } = await supabase
+        .from('clients')
+        .update({
+          total_sessions: newTotalSessions,
+          sessions_left: newSessionsLeft
+        })
+        .eq('id', client.id);
+
+      if (error) throw error;
+
+      // Update the client data in the UI
+      onEditClient(client.id, {
+        name: client.name,
+        email: client.email,
+        phone: client.phone,
+        package: client.package,
+        price: client.price || 120,
+        regularSlot: client.regular_slot,
+        location: client.location || '',
+        paymentType: client.payment_type || 'Cash',
+        birthday: client.birthday || undefined
+      });
+
+      toast({
+        title: "Package Updated",
+        description: sessionDifference > 0 
+          ? `Added ${sessionDifference} sessions to ${client.name}'s account`
+          : `Removed ${Math.abs(sessionDifference)} sessions from ${client.name}'s account`,
+      });
+    } catch (error) {
+      console.error('Error updating client after package edit:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update session counts after package edit",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -119,6 +221,13 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
                   }}
                   onFormDataChange={onFormDataChange}
                   onSubmit={() => handleSubmit(formData)}
+                />
+
+                {/* Package History */}
+                <EditClientPackageHistory
+                  client={client}
+                  onPackageDeleted={handlePackageDeleted}
+                  onPackageEdited={handlePackageEdited}
                 />
 
                 {/* Action Buttons */}
