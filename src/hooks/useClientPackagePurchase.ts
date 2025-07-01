@@ -45,6 +45,14 @@ export const useClientPackagePurchase = () => {
       const newTotalSessions = client.total_sessions + packageData.package_sessions;
       const newSessionsLeft = client.sessions_left + packageData.package_sessions;
 
+      console.log(`Updating ${client.name} sessions:`, {
+        oldTotal: client.total_sessions,
+        oldLeft: client.sessions_left,
+        adding: packageData.package_sessions,
+        newTotal: newTotalSessions,
+        newLeft: newSessionsLeft
+      });
+
       const { error: updateError } = await supabase
         .from('clients')
         .update({

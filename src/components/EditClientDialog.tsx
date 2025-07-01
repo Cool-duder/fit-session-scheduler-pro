@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -161,12 +160,11 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
     console.log('Adding package to client:', client.name, packageData);
     const result = await addPackageToClient(client, packageData);
     if (result.success) {
-      console.log('Package added successfully, refreshing page...');
-      // Close the add package dialog
+      console.log('Package added successfully, closing dialogs and refreshing...');
+      // Close both dialogs
       setAddPackageDialogOpen(false);
-      // Close the edit client dialog
       setOpen(false);
-      // Refresh the page to show updated session counts
+      // Force a page reload to ensure all data is refreshed
       window.location.reload();
     }
   };
