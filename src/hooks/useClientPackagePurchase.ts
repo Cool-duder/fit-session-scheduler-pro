@@ -69,16 +69,16 @@ export const useClientPackagePurchase = () => {
 
       if (updateResult.error) {
         console.error('Error updating client sessions:', updateResult.error);
+        // If client update fails, try to delete the purchase record to maintain consistency
+        await supabase
+          .from('package_purchases')
+          .delete()
+          .eq('id', purchaseResult.data.id);
         throw updateResult.error;
       }
 
       console.log('Client sessions updated successfully:', updateResult.data);
       console.log('Final session counts - Total:', updateResult.data.total_sessions, 'Left:', updateResult.data.sessions_left);
-
-      toast({
-        title: "Package Added Successfully",
-        description: `Added ${packageData.package_sessions} sessions to ${client.name}'s account. New total: ${newTotalSessions} sessions`,
-      });
 
       return { success: true, updatedClient: updateResult.data };
     } catch (error) {

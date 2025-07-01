@@ -34,6 +34,9 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
   const { toast } = useToast();
 
   const handleSubmit = (formData: any) => {
+    console.log('=== EDIT CLIENT DIALOG: Submitting form ===');
+    console.log('Form data:', formData);
+    
     if (formData.name && formData.email && formData.phone) {
       onEditClient(client.id, {
         ...formData,
@@ -78,15 +81,25 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
           birthday: result.updatedClient.birthday || undefined
         });
         
-        // Close the dialog after a short delay to show the updated data
-        setTimeout(() => {
-          setOpen(false);
-        }, 1000);
+        toast({
+          title: "Package Added",
+          description: `Successfully added ${packageData.package_sessions} sessions to ${client.name}'s account`,
+        });
       } else {
         console.error('Failed to add package:', result.error);
+        toast({
+          title: "Error",
+          description: "Failed to add package. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Error in handleAddPackage:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add package. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -124,10 +137,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
         birthday: client.birthday || undefined
       });
 
-      toast({
-        title: "Package Deleted",
-        description: `Removed ${deletedSessions} sessions from ${client.name}'s account`,
-      });
+      console.log('Client session counts updated successfully');
     } catch (error) {
       console.error('Error updating client after package deletion:', error);
       toast({
@@ -172,12 +182,7 @@ const EditClientDialog = ({ client, onEditClient }: EditClientDialogProps) => {
         birthday: client.birthday || undefined
       });
 
-      toast({
-        title: "Package Updated",
-        description: sessionDifference > 0 
-          ? `Added ${sessionDifference} sessions to ${client.name}'s account`
-          : `Removed ${Math.abs(sessionDifference)} sessions from ${client.name}'s account`,
-      });
+      console.log('Client session counts updated successfully after package edit');
     } catch (error) {
       console.error('Error updating client after package edit:', error);
       toast({

@@ -26,6 +26,7 @@ const EditClientPackageHistory = ({ client, onPackageDeleted, onPackageEdited }:
   const { toast } = useToast();
   const [clientPurchases, setClientPurchases] = useState<PackagePurchase[]>([]);
   const [editingPurchase, setEditingPurchase] = useState<PackagePurchase | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     package_name: '',
     package_sessions: 0,
@@ -34,11 +35,17 @@ const EditClientPackageHistory = ({ client, onPackageDeleted, onPackageEdited }:
   });
 
   useEffect(() => {
+    console.log('=== PACKAGE HISTORY: Filtering purchases for client ===');
+    console.log('All purchases:', purchases.length);
+    console.log('Client ID:', client.id);
+    
     const filtered = purchases.filter(purchase => purchase.client_id === client.id);
+    console.log('Filtered purchases for client:', filtered.length);
     setClientPurchases(filtered);
   }, [purchases, client.id]);
 
   useEffect(() => {
+    console.log('=== PACKAGE HISTORY: Component mounted, fetching purchases ===');
     refetch();
   }, [refetch]);
 
@@ -65,16 +72,29 @@ const EditClientPackageHistory = ({ client, onPackageDeleted, onPackageEdited }:
 
       // Notify parent component about the session change
       if (sessionDifference !== 0) {
+        console.log('Notifying parent of session change:', sessionDifference);
         onPackageEdited(sessionDifference);
       }
 
       setEditingPurchase(null);
+      setEditDialogOpen(false);
+      
       toast({
-        title: "Success",
-        description: `Package updated. ${sessionDifference > 0 ? 'Added' : 'Removed'} ${Math.abs(sessionDifference)} sessions.`,
+        title: "Package Updated",
+        description: `Package updated successfully. ${sessionDifference > 0 ? 'Added' : sessionDifference < 0 ? 'Removed' : 'No change to'} ${Math.abs(sessionDifference)} sessions.`,
       });
+
+      // Refresh the purchases list
+      setTimeout(() => {
+        refetch();
+      }, 500);
     } catch (error) {
       console.error('Error editing purchase:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update package. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -87,18 +107,32 @@ const EditClientPackageHistory = ({ client, onPackageDeleted, onPackageEdited }:
       await deletePurchase(purchase.id);
       
       // Notify parent component about the deleted sessions
+      console.log('Notifying parent of deleted sessions:', purchase.package_sessions);
       onPackageDeleted(purchase.package_sessions);
 
       toast({
-        title: "Success",
-        description: `Package deleted. Removed ${purchase.package_sessions} sessions from account.`,
+        title: "Package Deleted",
+        description: `Package deleted successfully. Removed ${purchase.package_sessions} sessions from account.`,
       });
+
+      // Refresh the purchases list
+      setTimeout(() => {
+        refetch();
+      }, 500);
     } catch (error) {
       console.error('Error deleting purchase:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete package. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const openEditDialog = (purchase: PackagePurchase) => {
+    console.log('=== OPENING EDIT DIALOG ===');
+    console.log('Purchase to edit:', purchase);
+    
     setEditingPurchase(purchase);
     setEditForm({
       package_name: purchase.package_name,
@@ -106,10 +140,17 @@ const EditClientPackageHistory = ({ client, onPackageDeleted, onPackageEdited }:
       amount: purchase.amount,
       payment_type: purchase.payment_type
     });
+    setEditDialogOpen(true);
   };
 
   if (loading) {
-    return <div className="text-center py-4">Loading package history...</div>;
+    return (
+      <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+        <CardContent className="p-6">
+          <div className="text-center py-4">Loading package history...</div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -150,80 +191,14 @@ const EditClientPackageHistory = ({ client, onPackageDeleted, onPackageEdited }:
                         <DollarSign className="w-4 h-4" />
                         <span>${purchase.amount}</span>
                       </div>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => openEditDialog(purchase)}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 w-8"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Edit Training Package</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="edit-package-name">Package Name</Label>
-                              <Input
-                                id="edit-package-name"
-                                value={editForm.package_name}
-                                onChange={(e) => setEditForm(prev => ({ ...prev, package_name: e.target.value }))}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-sessions">Number of Sessions</Label>
-                              <Input
-                                id="edit-sessions"
-                                type="number"
-                                min="1"
-                                value={editForm.package_sessions}
-                                onChange={(e) => setEditForm(prev => ({ ...prev, package_sessions: parseInt(e.target.value) || 0 }))}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-amount">Amount</Label>
-                              <Input
-                                id="edit-amount"
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={editForm.amount}
-                                onChange={(e) => setEditForm(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-payment-type">Payment Type</Label>
-                              <Select 
-                                value={editForm.payment_type} 
-                                onValueChange={(value) => setEditForm(prev => ({ ...prev, payment_type: value }))}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Cash">Cash</SelectItem>
-                                  <SelectItem value="Credit Card">Credit Card</SelectItem>
-                                  <SelectItem value="Venmo">Venmo</SelectItem>
-                                  <SelectItem value="Zelle">Zelle</SelectItem>
-                                  <SelectItem value="Check">Check</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="flex justify-end space-x-2">
-                              <Button variant="outline" onClick={() => setEditingPurchase(null)}>
-                                Cancel
-                              </Button>
-                              <Button onClick={handleEditPurchase}>
-                                Save Changes
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => openEditDialog(purchase)}
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 w-8"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
@@ -270,6 +245,72 @@ const EditClientPackageHistory = ({ client, onPackageDeleted, onPackageEdited }:
             </div>
           </ScrollArea>
         )}
+
+        {/* Edit Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Training Package</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-package-name">Package Name</Label>
+                <Input
+                  id="edit-package-name"
+                  value={editForm.package_name}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, package_name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-sessions">Number of Sessions</Label>
+                <Input
+                  id="edit-sessions"
+                  type="number"
+                  min="1"
+                  value={editForm.package_sessions}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, package_sessions: parseInt(e.target.value) || 0 }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-amount">Amount</Label>
+                <Input
+                  id="edit-amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={editForm.amount}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-payment-type">Payment Type</Label>
+                <Select 
+                  value={editForm.payment_type} 
+                  onValueChange={(value) => setEditForm(prev => ({ ...prev, payment_type: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Cash">Cash</SelectItem>
+                    <SelectItem value="Credit Card">Credit Card</SelectItem>
+                    <SelectItem value="Venmo">Venmo</SelectItem>
+                    <SelectItem value="Zelle">Zelle</SelectItem>
+                    <SelectItem value="Check">Check</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleEditPurchase}>
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
